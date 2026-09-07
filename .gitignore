@@ -9,3 +9,5 @@ Thumbs.db
 __pycache__/
 public/models/*.npy
 public/models/*.py
+
+.vercel

@@ -4,7 +4,8 @@
  */
 import * as ort from 'onnxruntime-web';
 
-ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4;
+// Use single-threaded WASM to reduce binary size from 27MB to ~5MB
+ort.env.wasm.numThreads = 1;
 
 const modelCache = new Map<string, ort.InferenceSession>();
 

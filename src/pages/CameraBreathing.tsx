@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Camera, CameraOff, Activity, ArrowLeft, Check, TrendingUp, Target, RotateCcw, Cpu, Smartphone, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCameraMotion, type SessionStats } from '../hooks/useCameraMotion';
-import { usePoseNet as usePoseNetHook } from '../hooks/usePoseNet';
 import { useDeviceTelemetry } from '../hooks/useDeviceTelemetry';
 import { useApp } from '../store';
 
@@ -24,9 +23,7 @@ const Card = ({ children, style }: { children: React.ReactNode; style?: React.CS
 export default function CameraBreathing() {
   const navigate = useNavigate();
   const { addBreathingSession } = useApp();
-  const { videoRef, canvasRef, isCameraActive, breathingPhase, breathingRate, error, startCamera, stopCamera, getSessionStats } = useCameraMotion();
-  const poseNet = usePoseNetHook();
-  const { isModelLoaded: isPoseNetReady, currentPose, loadModel: loadPoseNet, startAnalysis, stopAnalysis } = poseNet;
+  const { videoRef, canvasRef, breathingPhase, breathingRate, error, startCamera, stopCamera, getSessionStats } = useCameraMotion();
   const { logInteraction, currentDevice } = useDeviceTelemetry();
 
   const [isActive, setIsActive] = useState(false);
@@ -36,8 +33,6 @@ export default function CameraBreathing() {
   const [lastPhase, setLastPhase] = useState<string>('rest');
   const [sessionComplete, setSessionComplete] = useState(false);
   const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
-  const [poseNetEnabled, setPoseNetEnabled] = useState<boolean>(true);
-
   useEffect(() => {
     if (lastPhase === 'exhale' && breathingPhase === 'inhale') setBreathCycles(prev => prev + 1);
     setLastPhase(breathingPhase);
@@ -57,24 +52,20 @@ export default function CameraBreathing() {
     // Wait for DOM to commit the video element, then start camera
     setTimeout(async () => {
       await startCamera();
-      if (poseNetEnabled && !isPoseNetReady) loadPoseNet();
     }, 200);
-  }, [startCamera, logInteraction, poseNetEnabled, isPoseNetReady, loadPoseNet]);
+  }, [startCamera, logInteraction]);
 
-  useEffect(() => {
-    if (isCameraActive && isPoseNetReady && videoRef.current && poseNetEnabled) startAnalysis(videoRef.current);
-    return () => { if (!isCameraActive) stopAnalysis(); };
-  }, [isCameraActive, isPoseNetReady, videoRef, poseNetEnabled, startAnalysis, stopAnalysis]);
+
 
   const handleStop = useCallback(() => {
     const stats = getSessionStats();
     setSessionStats(stats);
-    stopCamera(); stopAnalysis(); setIsActive(false); setSessionComplete(true); logInteraction('touch');
+    stopCamera(); setIsActive(false); setSessionComplete(true); logInteraction('touch');
     addBreathingSession({
       pattern: { name: 'Camera Breathing', description: `AI-detected · ${stats.breathCount} breaths · ${stats.consistency}% consistency`, inhale: Math.round(stats.phaseDistribution.inhale / 10), holdIn: 0, exhale: Math.round(stats.phaseDistribution.exhale / 10), holdOut: 0, icon: '📷', color: '#14b8a6' },
       duration: stats.duration, completedCycles: stats.breathCount,
     });
-  }, [stopCamera, stopAnalysis, getSessionStats, addBreathingSession, logInteraction]);
+  }, [stopCamera, getSessionStats, addBreathingSession, logInteraction]);
 
   const handleRestart = useCallback(() => {
     setSessionComplete(false); setSessionStats(null); setShowGuide(true); setSessionDuration(0); setBreathCycles(0);
@@ -226,11 +217,9 @@ export default function CameraBreathing() {
             <div style={{ padding: '6px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.95)', border: '1px solid #e2e8f0', fontSize: 11, fontWeight: 600, color: '#0d9488', display: 'flex', alignItems: 'center', gap: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <Smartphone size={12} /> {currentDevice === 'phone' ? 'Phone' : 'Laptop'}
             </div>
-            {poseNetEnabled && (
-              <div style={{ padding: '6px 12px', borderRadius: 10, background: isPoseNetReady ? '#f0fdf4' : '#fffbeb', border: `1px solid ${isPoseNetReady ? '#bbf7d0' : '#fde68a'}`, fontSize: 11, fontWeight: 600, color: isPoseNetReady ? '#16a34a' : '#d97706', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Cpu size={12} /> {isPoseNetReady ? 'PoseNet' : 'Loading...'}
+            <div style={{ padding: '6px 12px', borderRadius: 10, background: '#f0fdf4', border: '1px solid #bbf7d0', fontSize: 11, fontWeight: 600, color: '#16a34a', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Cpu size={12} /> AI Active
               </div>
-            )}
           </div>
         </motion.div>
 
@@ -268,22 +257,17 @@ export default function CameraBreathing() {
           </div>
         </div>
 
-        {/* PoseNet Status */}
-        {poseNetEnabled && (
-          <Card style={{ marginTop: 16, padding: 14 }}>
+        {/* AI Status */}
+        <Card style={{ marginTop: 16, padding: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: isPoseNetReady ? '#10b981' : '#f59e0b', animation: 'pulse 2s infinite' }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', animation: 'pulse 2s infinite' }} />
                 <span style={{ fontSize: 12, color: '#475569' }}>
-                  {isPoseNetReady ? `PoseNet Active · ${currentPose ? Math.round(currentPose.confidence * 100) : 0}% confidence` : 'Loading BlazePose model...'}
+                  AI Breathing Detection Active
                 </span>
               </div>
-              {isPoseNetReady && currentPose && (
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#0d9488' }}>Chest: {Math.round(currentPose.chestExpansion * 100)}%</span>
-              )}
             </div>
           </Card>
-        )}
 
         {/* Stop Button */}
         <div style={{ marginTop: 16 }}>
@@ -347,7 +331,7 @@ export default function CameraBreathing() {
             {[
               { step: 1, text: 'Place phone at chest height, 30-50cm away', icon: '📱', color: '#14b8a6' },
               { step: 2, text: 'Tap "Start Camera" to begin recording', icon: '🎥', color: '#8b5cf6' },
-              { step: 3, text: poseNetEnabled ? 'PoseNet tracks shoulder landmarks for precision' : 'Breathe normally — the circle follows your breath', icon: poseNetEnabled ? '🦴' : '🫁', color: '#06b6d4' },
+              { step: 3, text: 'Breathe normally — the AI tracks your chest movement', icon: '🫁', color: '#06b6d4' },
               { step: 4, text: 'See real-time breathing rate and phase detection', icon: '📊', color: '#f59e0b', bg: '#fffbeb' },
             ].map(({ step, text, icon, color, bg }) => (
               <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -364,26 +348,7 @@ export default function CameraBreathing() {
         </Card>
       </motion.div>
 
-      {/* PoseNet Toggle */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} style={{ marginTop: 20 }}>
-        <Card style={{ padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#ecfeff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Cpu size={16} color="#0891b2" />
-              </div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>Enable PoseNet (TensorFlow.js)</p>
-                <p style={{ fontSize: 11, color: '#64748b' }}>More accurate chest tracking</p>
-              </div>
-            </div>
-            <button onClick={() => setPoseNetEnabled(!poseNetEnabled)}
-              style={{ width: 44, height: 24, borderRadius: 12, background: poseNetEnabled ? '#14b8a6' : '#cbd5e1', border: 'none', cursor: 'pointer', position: 'relative', transition: 'all 0.3s' }}>
-              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: poseNetEnabled ? 22 : 2, transition: 'all 0.3s', boxShadow: '0 2px 4px rgba(0,0,0,0.15)' }} />
-            </button>
-          </div>
-        </Card>
-      </motion.div>
+
 
       {/* Start Button */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} style={{ marginTop: 20, marginBottom: 20 }}>
