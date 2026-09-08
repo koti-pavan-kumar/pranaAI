@@ -1,10 +1,10 @@
 /**
  * Real ONNX Inference Engine
- * Downloads, caches, and runs pre-trained ONNX models in the browser
+ * Loads and runs pre-trained DistilBERT model from Hugging Face
  */
 import * as ort from 'onnxruntime-web';
 
-// Use single-threaded WASM to reduce binary size from 27MB to ~5MB
+// Use single-threaded WASM to reduce binary size
 ort.env.wasm.numThreads = 1;
 
 const modelCache = new Map<string, ort.InferenceSession>();
@@ -24,7 +24,8 @@ export async function loadModel(modelName: string): Promise<ort.InferenceSession
 }
 
 /**
- * Clean tokenizer — uses Map to avoid duplicate key issues
+ * Real DistilBERT WordPiece Tokenizer
+ * Loads vocabulary from Hugging Face vocab.txt (30K tokens)
  */
 export class DistilBERTTokenizer {
   private vocab = new Map<string, number>();
@@ -32,50 +33,81 @@ export class DistilBERTTokenizer {
 
   async load(): Promise<void> {
     if (this.loaded) return;
-    let id = 0;
-    const add = (words: string[]) => words.forEach(w => { if (!this.vocab.has(w)) this.vocab.set(w, id++); });
 
-    add(['[PAD]', '[UNK]', '[CLS]', '[SEP]', '[MASK]']);
-    add(['i', 'am', 'is', 'are', 'was', 'were', 'my', 'me', 'we', 'us', 'our', 'you', 'your', 'they', 'them', 'their', 'it', 'this', 'that', 'these', 'those']);
-    add(['happy', 'great', 'wonderful', 'amazing', 'love', 'excited', 'grateful', 'joy', 'awesome', 'good', 'calm', 'peaceful', 'relaxed', 'energized', 'focused', 'hopeful', 'confident', 'content', 'better', 'improving', 'positive', 'bright', 'beautiful', 'blessed', 'thankful', 'proud', 'accomplished', 'motivated', 'inspired', 'optimistic', 'fantastic', 'excellent', 'perfect', 'brilliant', 'outstanding']);
-    add(['sad', 'depressed', 'lonely', 'cry', 'hopeless', 'empty', 'pain', 'hurt', 'anxious', 'worried', 'nervous', 'stress', 'stressed', 'panic', 'fear', 'terrible', 'awful', 'hate', 'angry', 'frustrated', 'struggling', 'worse', 'tired', 'exhausted', 'overwhelmed', 'negative', 'dark', 'scared', 'confused', 'lost', 'helpless', 'worthless', 'guilty', 'ashamed', 'disappointed', 'miserable', 'heartbroken', 'grief', 'sorrow']);
-    add(['very', 'extremely', 'incredibly', 'super', 'really', 'so', 'absolutely', 'completely', 'totally', 'utterly']);
-    add(['not', 'no', 'never', 'neither', 'nobody', 'nothing', 'nowhere', 'hardly', 'barely', 'scarcely', "don't", "isn't", "wasn't", "won't", "can't", "couldn't", "shouldn't", "wouldn't", "doesn't", "didn't"]);
-    add(['breathing', 'exercise', 'meditation', 'sleep', 'rest', 'energized', 'focus', 'wellness', 'health', 'mind', 'body', 'help', 'need', 'want', 'try']);
-    add(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from']);
-    add(['has', 'have', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'shall', 'must']);
-    add(['morning', 'afternoon', 'evening', 'night', 'day', 'week', 'month', 'year', 'today', 'yesterday']);
-    add(['go', 'come', 'make', 'take', 'give', 'get', 'know', 'think', 'see', 'hear', 'use', 'find', 'tell', 'ask', 'work', 'seem', 'feel', 'leave', 'call', 'keep', 'let', 'begin', 'show', 'play', 'run', 'move', 'live', 'believe', 'bring', 'happen', 'write', 'provide', 'sit', 'stand', 'lose', 'pay', 'meet', 'include', 'continue', 'set', 'learn', 'change', 'lead', 'understand', 'watch', 'follow', 'stop', 'speak', 'read', 'spend', 'grow', 'open', 'walk', 'win', 'offer', 'remember', 'consider', 'appear', 'buy', 'wait', 'serve', 'send', 'expect', 'build', 'stay', 'fall', 'cut', 'reach', 'remain']);
-    add(['feeling', 'felt', 'mental', 'physical', 'emotional', 'medical', 'difficult', 'important', 'available', 'likely', 'short', 'single', 'current', 'wrong', 'private', 'past', 'fine', 'common', 'poor', 'natural', 'sufficient']);
+    try {
+      // Load real vocabulary from Hugging Face
+      const response = await fetch('/models/vocab.txt');
+      const text = await response.text();
+      const lines = text.split('\n').filter(l => l.trim());
+      lines.forEach((token, idx) => {
+        this.vocab.set(token, idx);
+      });
+      console.log(`[Tokenizer] Loaded ${this.vocab.size} real DistilBERT tokens`);
+    } catch {
+      // Fallback to minimal vocab if file not found
+      console.warn('[Tokenizer] vocab.txt not found, using minimal fallback');
+      const fallback = ['[PAD]', '[UNK]', '[CLS]', '[SEP]', '[MASK]', 'i', 'am', 'is', 'are', 'was', 'happy', 'sad', 'good', 'bad', 'love', 'hate', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'not', 'no', 'never', 'very', 'really', 'so', 'feeling', 'today', 'great', 'terrible', 'anxious', 'calm', 'stressed', 'peaceful', 'tired', 'energized', 'hopeful', 'hopeless'];
+      fallback.forEach((token, idx) => this.vocab.set(token, idx));
+    }
 
     this.loaded = true;
-    console.log(`[Tokenizer] Loaded ${this.vocab.size} tokens`);
   }
 
-  tokenize(text: string, maxLen = 128): { inputIds: BigInt64Array; attentionMask: BigInt64Array } {
+  tokenize(text: string, maxLen = 128): { inputIds: Int32Array; attentionMask: Int32Array } {
     const lower = text.toLowerCase().replace(/[^\w\s']/g, ' ').replace(/\s+/g, ' ').trim();
     const words = lower.split(' ').filter(Boolean);
-    const tokens = [2]; // CLS
-    for (const word of words) {
-      tokens.push(this.vocab.get(word) ?? 1); // 1 = UNK
-    }
-    tokens.push(3); // SEP
+    const tokens = [101]; // [CLS] token ID in real DistilBERT
 
-    const inputIds = new Array(maxLen).fill(0);
-    const attentionMask = new Array(maxLen).fill(0);
-    for (let i = 0; i < Math.min(tokens.length, maxLen); i++) {
-      inputIds[i] = tokens[i];
-      attentionMask[i] = 1;
+    for (const word of words) {
+      // WordPiece tokenization
+      if (this.vocab.has(word)) {
+        tokens.push(this.vocab.get(word)!);
+      } else {
+        // Subword tokenization
+        let remaining = word;
+        let isFirst = true;
+        while (remaining.length > 0) {
+          let found = false;
+          for (let end = remaining.length; end > 0; end--) {
+            const sub = remaining.slice(0, end);
+            const subToken = isFirst ? sub : `##${sub}`;
+            if (this.vocab.has(subToken)) {
+              tokens.push(this.vocab.get(subToken)!);
+              remaining = remaining.slice(end);
+              isFirst = false;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            tokens.push(this.vocab.get('[UNK]') ?? 1);
+            remaining = '';
+          }
+        }
+      }
     }
-    return {
-      inputIds: BigInt64Array.from(inputIds.map(id => BigInt(id))),
-      attentionMask: BigInt64Array.from(attentionMask.map(m => BigInt(m))),
-    };
+
+    tokens.push(102); // [SEP] token ID
+
+    // Pad or truncate
+    const inputIds = new Int32Array(maxLen);
+    const attentionMask = new Int32Array(maxLen);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < tokens.length) {
+        inputIds[i] = tokens[i];
+        attentionMask[i] = 1;
+      } else {
+        inputIds[i] = 0; // [PAD]
+        attentionMask[i] = 0;
+      }
+    }
+
+    return { inputIds, attentionMask };
   }
 }
 
 /**
- * Sentiment Analyzer — Enhanced emotion detection
+ * Sentiment Analyzer — Uses real DistilBERT ONNX model
  */
 export class SentimentAnalyzer {
   private tokenizer: DistilBERTTokenizer;
@@ -88,7 +120,7 @@ export class SentimentAnalyzer {
   async initialize(): Promise<void> {
     await this.tokenizer.load();
 
-    // Try to load ONNX model — WASM first (better INT64 support)
+    // Try to load ONNX model — WASM first (better INT32 support)
     try {
       this.session = await ort.InferenceSession.create('/models/sentiment.onnx', {
         executionProviders: ['wasm'],
@@ -112,7 +144,7 @@ export class SentimentAnalyzer {
     }
 
     this.ready = true;
-    console.log('[Sentiment] Ready', this.modelLoaded ? '(ONNX model)' : '(enhanced lexicon)');
+    console.log('[Sentiment] Ready', this.modelLoaded ? '(Real DistilBERT ONNX model)' : '(enhanced lexicon fallback)');
   }
 
   // Run real ONNX inference
@@ -120,24 +152,26 @@ export class SentimentAnalyzer {
     if (!this.session || !this.modelLoaded) return null;
 
     try {
-      const { inputIds } = this.tokenizer.tokenize(text);
+      const { inputIds, attentionMask } = this.tokenizer.tokenize(text);
 
-      // Convert BigInt64Array to Int32Array for broader ONNX Runtime compatibility
-      const intIds = new Int32Array(128);
-      for (let i = 0; i < 128; i++) {
-        intIds[i] = Number(inputIds[i]);
-      }
+      // Create input tensors
+      const inputIdsTensor = new ort.Tensor('int32', inputIds, [1, 128]);
+      const attentionMaskTensor = new ort.Tensor('int32', attentionMask, [1, 128]);
 
-      // Create input tensor — try int32 first (better WASM support)
-      const inputTensor = new ort.Tensor('int32', intIds, [1, 128]);
+      console.log('[Sentiment] Running real DistilBERT ONNX inference...');
 
-      console.log('[Sentiment] Running ONNX inference...');
-      const results = await this.session.run({ input_ids: inputTensor });
+      // DistilBERT expects: input_ids, attention_mask
+      const results = await this.session.run({
+        input_ids: inputIdsTensor,
+        attention_mask: attentionMaskTensor,
+      });
+
+      // Get logits from output
       const logits = results.logits.data as Float32Array;
 
       console.log(`[Sentiment] ONNX raw logits: [${logits[0].toFixed(4)}, ${logits[1].toFixed(4)}]`);
 
-      // Softmax
+      // Softmax to get probabilities
       const negLogit = logits[0];
       const posLogit = logits[1];
       const maxLogit = Math.max(negLogit, posLogit);
@@ -166,9 +200,36 @@ export class SentimentAnalyzer {
     // Try ONNX inference first
     const onnxResult = await this.runOnnxInference(text);
     if (onnxResult) {
-      console.log(`[Sentiment] ONNX inference: neg=${(onnxResult.negative * 100).toFixed(1)}%, pos=${(onnxResult.positive * 100).toFixed(1)}%`);
+      console.log(`[Sentiment] Real DistilBERT ONNX inference: neg=${(onnxResult.negative * 100).toFixed(1)}%, pos=${(onnxResult.positive * 100).toFixed(1)}%`);
+
+      // Use ONNX results directly
+      const posConf = onnxResult.positive;
+      const negConf = onnxResult.negative;
+      const neuConf = Math.max(0, 1 - posConf - negConf);
+
+      let label: 'positive' | 'negative' | 'neutral';
+      let confidence: number;
+      if (posConf > negConf && posConf > neuConf) { label = 'positive'; confidence = Math.round(posConf * 100); }
+      else if (negConf > posConf && negConf > neuConf) { label = 'negative'; confidence = Math.round(negConf * 100); }
+      else { label = 'neutral'; confidence = Math.round(neuConf * 100); }
+
+      // Detect emotions from text
+      const emotions = this.detectEmotions(text);
+
+      return {
+        label,
+        confidence: Math.min(95, Math.max(30, confidence)),
+        scores: { positive: Math.round(posConf * 100), negative: Math.round(negConf * 100), neutral: Math.round(neuConf * 100) },
+        emotions,
+      };
     }
 
+    // Fallback to lexicon-based analysis
+    console.log('[Sentiment] Using lexicon fallback');
+    return this.lexiconFallback(text);
+  }
+
+  private detectEmotions(text: string): string[] {
     const lower = text.toLowerCase();
     const words = lower.split(/\s+/);
 
@@ -188,40 +249,31 @@ export class SentimentAnalyzer {
       emotionScores[emotion] = words.filter(w => lexicon.includes(w)).length;
     }
 
-    const detectedEmotions = Object.entries(emotionScores)
+    return Object.entries(emotionScores)
       .filter(([, s]) => s > 0)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([e]) => e);
+  }
 
-    const posEmotions = ['joy', 'trust', 'anticipation'];
-    const negEmotions = ['sadness', 'anger', 'fear', 'disgust'];
-    let posScore = posEmotions.reduce((s, e) => s + (emotionScores[e] || 0), 0);
-    let negScore = negEmotions.reduce((s, e) => s + (emotionScores[e] || 0), 0);
+  private lexiconFallback(text: string): {
+    label: 'positive' | 'negative' | 'neutral';
+    confidence: number;
+    scores: { positive: number; negative: number; neutral: number };
+    emotions: string[];
+  } {
+    const lower = text.toLowerCase();
+    const words = lower.split(/\s+/);
 
-    const intensifiers = ['very', 'extremely', 'incredibly', 'super', 'really', 'so', 'absolutely', 'completely', 'totally'];
-    const negations = ['not', 'no', 'never', "don't", "isn't", "wasn't", "won't", "can't", "couldn't", "doesn't", "didn't"];
+    const positiveWords = ['happy', 'great', 'wonderful', 'amazing', 'love', 'excited', 'grateful', 'awesome', 'fantastic', 'good', 'calm', 'peaceful', 'relaxed', 'energized', 'focused', 'hopeful', 'confident', 'better', 'improving', 'positive'];
+    const negativeWords = ['sad', 'depressed', 'lonely', 'cry', 'hopeless', 'empty', 'pain', 'hurt', 'anxious', 'worried', 'nervous', 'stress', 'stressed', 'panic', 'fear', 'terrible', 'awful', 'hate', 'angry', 'frustrated', 'struggling', 'worse', 'tired', 'exhausted', 'overwhelmed', 'negative'];
 
-    let hasNegation = false;
-    let intensifierCount = 0;
-    for (const word of words) {
-      if (negations.includes(word)) hasNegation = true;
-      if (intensifiers.includes(word)) intensifierCount++;
-    }
+    const posCount = words.filter(w => positiveWords.includes(w)).length;
+    const negCount = words.filter(w => negativeWords.includes(w)).length;
+    const total = posCount + negCount + 0.001;
 
-    const multiplier = 1 + (intensifierCount * 0.3);
-    if (hasNegation) [posScore, negScore] = [negScore * 0.6, posScore * 0.6 + 0.5];
-    posScore *= multiplier;
-    negScore *= multiplier;
-
-    if (text.includes('?')) negScore += 0.3;
-    const excl = (text.match(/!/g) || []).length;
-    if (posScore > negScore) posScore += excl * 0.2;
-    else negScore += excl * 0.1;
-
-    const total = posScore + negScore + 0.001;
-    const posConf = posScore / total;
-    const negConf = negScore / total;
+    const posConf = posCount / total;
+    const negConf = negCount / total;
     const neuConf = Math.max(0, 1 - posConf - negConf);
 
     let label: 'positive' | 'negative' | 'neutral';
@@ -229,12 +281,12 @@ export class SentimentAnalyzer {
     if (posConf > negConf && posConf > neuConf) { label = 'positive'; confidence = Math.round(posConf * 100); }
     else if (negConf > posConf && negConf > neuConf) { label = 'negative'; confidence = Math.round(negConf * 100); }
     else { label = 'neutral'; confidence = Math.round(neuConf * 100); }
-    confidence = Math.min(95, Math.max(30, confidence));
 
     return {
-      label, confidence,
+      label,
+      confidence: Math.min(95, Math.max(30, confidence)),
       scores: { positive: Math.round(posConf * 100), negative: Math.round(negConf * 100), neutral: Math.round(neuConf * 100) },
-      emotions: detectedEmotions.length > 0 ? detectedEmotions : ['neutral'],
+      emotions: this.detectEmotions(text),
     };
   }
 }
@@ -248,47 +300,3 @@ export async function getSentimentAnalyzer(): Promise<SentimentAnalyzer> {
   }
   return sentimentAnalyzer;
 }
-
-/**
- * Real-time speech-to-text using Web Speech API (browser-native, on-device)
- */
-export class SpeechToText {
-  private recognition: any = null;
-  private isListening = false;
-  private onResult: ((text: string) => void) | null = null;
-  private onEnd: (() => void) | null = null;
-
-  constructor() {
-    if (typeof window !== 'undefined') {
-      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SR) {
-        this.recognition = new SR();
-        this.recognition.continuous = true;
-        this.recognition.interimResults = true;
-        this.recognition.lang = 'en-US';
-        this.recognition.onresult = (e: any) => {
-          let final = '';
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            if (e.results[i].isFinal) final += e.results[i][0].transcript;
-          }
-          if (final && this.onResult) this.onResult(final);
-        };
-        this.recognition.onend = () => { this.isListening = false; if (this.onEnd) this.onEnd(); };
-        this.recognition.onerror = (e: any) => { console.error('[STT]', e.error); this.isListening = false; if (this.onEnd) this.onEnd(); };
-      }
-    }
-  }
-
-  start(cb: (text: string) => void, onEnd?: () => void): boolean {
-    if (!this.recognition) return false;
-    this.onResult = cb;
-    this.onEnd = onEnd || null;
-    try { this.recognition.start(); this.isListening = true; return true; }
-    catch { return false; }
-  }
-
-  stop(): void { if (this.recognition && this.isListening) { this.recognition.stop(); this.isListening = false; } }
-  getIsListening(): boolean { return this.isListening; }
-}
-
-export const speechToText = new SpeechToText();
