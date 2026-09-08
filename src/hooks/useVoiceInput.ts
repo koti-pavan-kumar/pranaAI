@@ -63,8 +63,9 @@ export function useVoiceInput(): UseVoiceInputReturn {
     shouldListenRef.current = true;
     finalTextRef.current = '';
 
-    // Track ALL final results by index to prevent duplicates
+    // Track processed result indices + last added text to prevent duplicates
     const processedIndices = new Set<number>();
+    let lastAddedText = '';
 
     recognition.onresult = (event: any) => {
       let newFinal = '';
@@ -73,11 +74,11 @@ export function useVoiceInput(): UseVoiceInputReturn {
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal && !processedIndices.has(i)) {
-          // Only process this result ONCE
           processedIndices.add(i);
           const text = result[0].transcript.trim();
-          if (text) {
+          if (text && text !== lastAddedText) {
             newFinal += (newFinal ? ' ' : '') + text;
+            lastAddedText = text;
           }
         } else if (!result.isFinal) {
           interim += result[0].transcript;
