@@ -53,7 +53,7 @@ export class DistilBERTTokenizer {
     this.loaded = true;
   }
 
-  tokenize(text: string, maxLen = 128): { inputIds: Int32Array; attentionMask: Int32Array } {
+  tokenize(text: string, maxLen = 128): { inputIds: BigInt64Array; attentionMask: BigInt64Array } {
     const lower = text.toLowerCase().replace(/[^\w\s']/g, ' ').replace(/\s+/g, ' ').trim();
     const words = lower.split(' ').filter(Boolean);
     const tokens = [101]; // [CLS] token ID in real DistilBERT
@@ -89,16 +89,16 @@ export class DistilBERTTokenizer {
 
     tokens.push(102); // [SEP] token ID
 
-    // Pad or truncate
-    const inputIds = new Int32Array(maxLen);
-    const attentionMask = new Int32Array(maxLen);
+    // Pad or truncate — use BigInt64Array for INT64 tensors
+    const inputIds = new BigInt64Array(maxLen);
+    const attentionMask = new BigInt64Array(maxLen);
     for (let i = 0; i < maxLen; i++) {
       if (i < tokens.length) {
-        inputIds[i] = tokens[i];
-        attentionMask[i] = 1;
+        inputIds[i] = BigInt(tokens[i]);
+        attentionMask[i] = BigInt(1);
       } else {
-        inputIds[i] = 0; // [PAD]
-        attentionMask[i] = 0;
+        inputIds[i] = BigInt(0); // [PAD]
+        attentionMask[i] = BigInt(0);
       }
     }
 
@@ -154,9 +154,9 @@ export class SentimentAnalyzer {
     try {
       const { inputIds, attentionMask } = this.tokenizer.tokenize(text);
 
-      // Create input tensors
-      const inputIdsTensor = new ort.Tensor('int32', inputIds, [1, 128]);
-      const attentionMaskTensor = new ort.Tensor('int32', attentionMask, [1, 128]);
+      // Create INT64 tensors (model expects int64)
+      const inputIdsTensor = new ort.Tensor('int64', inputIds, [1, 128]);
+      const attentionMaskTensor = new ort.Tensor('int64', attentionMask, [1, 128]);
 
       console.log('[Sentiment] Running real DistilBERT ONNX inference...');
 

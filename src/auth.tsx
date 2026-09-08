@@ -31,17 +31,6 @@ export function useAuth(): AuthContextType {
 
 // ============ localStorage helpers ============
 
-function getStoredUsers(): Record<string, { name: string; password: string }> {
-  try { return JSON.parse(localStorage.getItem('pranaai_users') || '{}'); }
-  catch { return {}; }
-}
-
-function storeUser(email: string, name: string, password: string) {
-  const users = getStoredUsers();
-  users[email] = { name, password };
-  localStorage.setItem('pranaai_users', JSON.stringify(users));
-}
-
 function getCurrentUser(): User | null {
   try {
     const data = localStorage.getItem('pranaai_session');
@@ -104,28 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Fallback to localStorage
-    await new Promise(r => setTimeout(r, 500));
-
-    const users = getStoredUsers();
-    const stored = users[email];
-
-    if (stored && stored.password === password) {
-      const newUser: User = { name: stored.name, email };
-      setUser(newUser);
-      saveSession(newUser);
-      return true;
-    }
-
-    // Accept any credentials for demo
-    if (email && password) {
-      const newUser: User = { name: email.split('@')[0], email };
-      setUser(newUser);
-      saveSession(newUser);
-      storeUser(email, newUser.name, password);
-      return true;
-    }
-
+    // No fallback — require Supabase for real auth
+    console.error('[Auth] Supabase not configured. Login requires Supabase backend.');
     return false;
   }, []);
 
@@ -155,17 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Fallback to localStorage
-    await new Promise(r => setTimeout(r, 500));
-
-    const users = getStoredUsers();
-    if (users[email]) return false;
-
-    storeUser(email, name, password);
-    const newUser: User = { name, email };
-    setUser(newUser);
-    saveSession(newUser);
-    return true;
+    // No fallback — require Supabase for real auth
+    console.error('[Auth] Supabase not configured. Registration requires Supabase backend.');
+    return false;
   }, []);
 
   const logout = useCallback(async () => {
