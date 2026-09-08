@@ -90,23 +90,23 @@ const englishNegativeWords = [
 
 /** Romanized Hindi (Hinglish) positive words — when Google transcribes Hindi speech as Roman text */
 const romanHindiPositiveWords = [
-  'khush', 'accha', 'acha', 'shandar', 'pyar', 'prasan', 'shant',
-  'aashvaan', 'santusht', 'behtar', 'sundar', 'garv', 'prerit',
+  'khush', 'accha', 'acha', 'achcha', 'achha', 'shandar', 'pyar', 'prem', 'prasan', 'shant',
+  'santusht', 'behtar', 'sundar', 'garv', 'prerit',
   'utsahit', 'harshit', 'anandit', 'muskura', 'hans',
   'sukhi', 'swasth', 'urjawan', 'jivant', 'safal', 'vijayi',
-  'khushi', 'prasnata', 'badhiya', 'maje', 'masti', 'anand', 'sukoon', 'mast',
-  'bahut', 'bhot', 'bohot',
+  'khushi', 'prasnata', 'badhiya', 'badiya', 'maje', 'masti', 'anand', 'sukoon', 'sukun', 'mast',
   'happy', 'great', 'good', 'love', 'excited', 'amazing', 'wonderful',
   'best', 'awesome', 'fantastic', 'excellent', 'perfect', 'beautiful',
   'proud', 'grateful', 'motivated', 'inspired', 'positive', 'blessed',
-  'nice', 'fine', 'well', 'enjoy', 'fun', 'cool',
+  'nice', 'fine', 'well', 'enjoy', 'fun', 'cool', 'theek', 'thik',
+  'acchi', 'achi', 'achchi', 'achhi', 'mahol', 'vishal',
 ];
 
 /** Romanized Hindi (Hinglish) negative words */
 const romanHindiNegativeWords = [
-  'dukh', 'udas', 'udass', 'akela', 'rona', 'nirash', 'khali', 'dard',
-  'chot', 'chintit', 'pareshan', 'pare-shaan', 'tanav', 'dar', 'bhay',
-  'ghrina', 'gussa', 'krodh', 'naraz', 'thaka', 'bojhil',
+  'dukh', 'udas', 'udass', 'udaas', 'akela', 'rona', 'nirash', 'khali', 'dard',
+  'chot', 'chintit', 'pareshan', 'preshan', 'tanav', 'tension', 'dar', 'bhay',
+  'ghrina', 'gussa', 'gusa', 'krodh', 'naraz', 'naraaz', 'thaka', 'bojhil',
   'kamzor', 'bimar', 'tabah', 'barbad', 'asfal', 'haar', 'rog',
   'bechaini', 'ghabrahat', 'takleef', 'kasht', 'sangharsh', 'mushkil',
   'kathin', 'bura', 'ganda', 'kharab', 'nakam', 'hatash',
@@ -257,11 +257,12 @@ export function analyzeSentiment(text: string): SentimentResult {
 function detectRomanHindi(lower: string): boolean {
   const hinglishIndicators = [
     'main', 'mera', 'meri', 'hun', 'hu', 'hai', 'ho', 'tho', 'toh',
-    'bahut', 'bhot', 'bohot', 'accha', 'acha', 'theek', 'thik',
+    'bahut', 'bhot', 'bohot', 'accha', 'acha', 'achcha', 'achha', 'theek', 'thik',
     'aaj', 'kal', 'abhi', 'phir', 'bhi', 'mein', 'ko', 'se',
     'khush', 'sad', 'pareshan', 'tension', 'mood', 'feel',
-    'jindagi', 'zindagi', 'dil', ' mann', 'kya', 'kyun', 'kyu',
+    'jindagi', 'zindagi', 'dil', 'mann', 'kya', 'kyun', 'kyu',
     'nahi', 'nahin', 'haan', 'ji', 'bhai', 'yaar', 'dost',
+    'vichar', 'soch', 'raat', 'din', 'subah', 'shaam', 'wakt',
   ];
   const words = lower.split(/\s+/);
   let matchCount = 0;

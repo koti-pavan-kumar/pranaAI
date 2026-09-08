@@ -78,7 +78,6 @@ export function useVoiceInput(): UseVoiceInputReturn {
       let newFinal = '';
       let interim = '';
 
-      // Only process results AFTER the last known result count (prevents duplicates on restart)
       for (let i = resultCountRef.current; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
@@ -90,12 +89,18 @@ export function useVoiceInput(): UseVoiceInputReturn {
       }
 
       if (newFinal) {
-        accumulatedRef.current += newFinal;
+        // Add space between phrases if there isn't one already
+        const trimmed = accumulatedRef.current.trimEnd();
+        const newTrimmed = newFinal.trimStart();
+        if (trimmed && newTrimmed) {
+          accumulatedRef.current = trimmed + ' ' + newTrimmed;
+        } else {
+          accumulatedRef.current = trimmed + newTrimmed;
+        }
       }
 
       setTranscript(accumulatedRef.current);
       setInterimTranscript(interim);
-      console.log(`[VoiceInput] Final: "${accumulatedRef.current}" | Interim: "${interim}"`);
     };
 
     recognition.onerror = (event: any) => {
@@ -119,15 +124,15 @@ export function useVoiceInput(): UseVoiceInputReturn {
     recognition.onend = () => {
       if (shouldListenRef.current) {
         try {
-          // Re-read current language on restart — handles language switch while recording
           const newRecognition = createRecognition();
           if (newRecognition) {
             recognitionRef.current = newRecognition;
+            // Reset result count — new recognition starts fresh at index 0
+            resultCountRef.current = 0;
             newRecognition.onresult = recognition.onresult;
             newRecognition.onerror = recognition.onerror;
             newRecognition.onend = recognition.onend;
             newRecognition.start();
-            console.log(`[VoiceInput] Auto-restarted with lang=${newRecognition.lang}`);
           }
         } catch (e) {
           console.error('[VoiceInput] Failed to restart:', e);
