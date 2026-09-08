@@ -1,64 +1,92 @@
-// PranaAI Service Worker — Offline-first caching
-const CACHE_NAME = 'prana-ai-v1';
-const STATIC_ASSETS = [
+/**
+ * PranaAI Service Worker — Offline-first PWA
+ * Caches all assets for offline use
+ */
+
+const CACHE_NAME = 'pranaai-v1';
+const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg',
+  '/models/sentiment-small.onnx',
+  '/models/vocab-small.txt',
 ];
 
-// Install: cache critical assets
+// Install — cache critical assets
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SW] Caching critical assets');
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate — clean old caches
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating...');
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    )
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
   self.clients.claim();
 });
 
-// Fetch: cache-first for static, network-first for API
+// Fetch — serve from cache, fall back to network
 self.addEventListener('fetch', (event) => {
-  const { request } = event;
-
   // Skip non-GET requests
-  if (request.method !== 'GET') return;
+  if (event.request.method !== 'GET') return;
 
-  // For same-origin navigation, try network first, fall back to cache
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request) || caches.match('/'))
-    );
-    return;
-  }
+  // Skip chrome-extension and other non-http requests
+  if (!event.request.url.startsWith('http')) return;
 
-  // For static assets, cache first
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        // Return cached version
+        return cachedResponse;
+      }
+
+      // Fetch from network
+      return fetch(event.request).then((networkResponse) => {
+        // Don't cache non-success responses
+        if (!networkResponse || networkResponse.status !== 200) {
+          return networkResponse;
         }
-        return response;
+
+        // Clone the response
+        const responseToCache = networkResponse.clone();
+
+        // Cache the new resource
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return networkResponse;
+      }).catch(() => {
+        // If both cache and network fail, return a fallback for HTML pages
+        if (event.request.headers.get('accept')?.includes('text/html')) {
+          return caches.match('/index.html');
+        }
+        return new Response('Offline', { status: 503 });
       });
     })
   );
+});
+
+// Listen for messages from the app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

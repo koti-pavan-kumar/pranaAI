@@ -1,22 +1,29 @@
 {
-  "name": "PranaAI — On-Device AI Breathing & Mental Wellness Coach",
+  "name": "PranaAI - On-Device Wellness Companion",
   "short_name": "PranaAI",
-  "description": "AI-powered breathing coach that runs entirely on your phone. No cloud, no tracking, 100% private.",
+  "description": "AI-powered breathing exercises and mood tracking that runs 100% on your phone",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#14b8a6",
+  "orientation": "portrait-primary",
   "scope": "/",
+  "lang": "en",
+  "categories": ["health", "lifestyle", "productivity"],
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["health", "medical", "lifestyle"],
-  "lang": "en",
-  "dir": "ltr"
+  "screenshots": [],
+  "prefer_related_applications": false
 }
