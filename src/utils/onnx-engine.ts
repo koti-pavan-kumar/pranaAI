@@ -35,17 +35,17 @@ export class DistilBERTTokenizer {
     if (this.loaded) return;
 
     try {
-      // Load real vocabulary from Hugging Face
-      const response = await fetch('/models/vocab.txt');
+      // Load small offline vocabulary (ships with app)
+      const response = await fetch('/models/vocab-small.txt');
       const text = await response.text();
       const lines = text.split('\n').filter(l => l.trim());
       lines.forEach((token, idx) => {
         this.vocab.set(token, idx);
       });
-      console.log(`[Tokenizer] Loaded ${this.vocab.size} real DistilBERT tokens`);
+      console.log(`[Tokenizer] Loaded ${this.vocab.size} offline tokens (bundled)`);
     } catch {
       // Fallback to minimal vocab if file not found
-      console.warn('[Tokenizer] vocab.txt not found, using minimal fallback');
+      console.warn('[Tokenizer] vocab-small.txt not found, using minimal fallback');
       const fallback = ['[PAD]', '[UNK]', '[CLS]', '[SEP]', '[MASK]', 'i', 'am', 'is', 'are', 'was', 'happy', 'sad', 'good', 'bad', 'love', 'hate', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'not', 'no', 'never', 'very', 'really', 'so', 'feeling', 'today', 'great', 'terrible', 'anxious', 'calm', 'stressed', 'peaceful', 'tired', 'energized', 'hopeful', 'hopeless'];
       fallback.forEach((token, idx) => this.vocab.set(token, idx));
     }
@@ -120,23 +120,23 @@ export class SentimentAnalyzer {
   async initialize(): Promise<void> {
     await this.tokenizer.load();
 
-    // Try to load ONNX model — WASM first (better INT32 support)
+    // Load small offline ONNX model (758KB, ships with app)
     try {
-      this.session = await ort.InferenceSession.create('/models/sentiment.onnx', {
+      this.session = await ort.InferenceSession.create('/models/sentiment-small.onnx', {
         executionProviders: ['wasm'],
         graphOptimizationLevel: 'all',
       });
       this.modelLoaded = true;
-      console.log('[Sentiment] ✅ ONNX model loaded successfully via WASM!');
+      console.log('[Sentiment] ✅ Offline ONNX model loaded (758KB, no internet needed)');
     } catch (err1) {
       console.warn('[Sentiment] WASM load failed, trying WebGL:', err1);
       try {
-        this.session = await ort.InferenceSession.create('/models/sentiment.onnx', {
+        this.session = await ort.InferenceSession.create('/models/sentiment-small.onnx', {
           executionProviders: ['webgl'],
           graphOptimizationLevel: 'all',
         });
         this.modelLoaded = true;
-        console.log('[Sentiment] ✅ ONNX model loaded via WebGL!');
+        console.log('[Sentiment] ✅ Offline ONNX model loaded via WebGL');
       } catch (err2) {
         console.warn('[Sentiment] All ONNX providers failed:', err1, err2);
         this.modelLoaded = false;
@@ -144,7 +144,7 @@ export class SentimentAnalyzer {
     }
 
     this.ready = true;
-    console.log('[Sentiment] Ready', this.modelLoaded ? '(Real DistilBERT ONNX model)' : '(enhanced lexicon fallback)');
+    console.log('[Sentiment] Ready', this.modelLoaded ? '(Offline ONNX - 758KB, zero internet)' : '(lexicon fallback)');
   }
 
   // Run real ONNX inference
@@ -158,7 +158,7 @@ export class SentimentAnalyzer {
       const inputIdsTensor = new ort.Tensor('int64', inputIds, [1, 128]);
       const attentionMaskTensor = new ort.Tensor('int64', attentionMask, [1, 128]);
 
-      console.log('[Sentiment] Running real DistilBERT ONNX inference...');
+      console.log('[Sentiment] Running offline ONNX inference...');
 
       // DistilBERT expects: input_ids, attention_mask
       const results = await this.session.run({
@@ -200,7 +200,7 @@ export class SentimentAnalyzer {
     // Try ONNX inference first
     const onnxResult = await this.runOnnxInference(text);
     if (onnxResult) {
-      console.log(`[Sentiment] Real DistilBERT ONNX inference: neg=${(onnxResult.negative * 100).toFixed(1)}%, pos=${(onnxResult.positive * 100).toFixed(1)}%`);
+      console.log(`[Sentiment] Offline ONNX inference: neg=${(onnxResult.negative * 100).toFixed(1)}%, pos=${(onnxResult.positive * 100).toFixed(1)}%`);
 
       // Use ONNX results directly
       const posConf = onnxResult.positive;
