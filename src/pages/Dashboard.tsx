@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wind, BookOpen, Flame, TrendingUp, ArrowLeft, Sparkles, Brain, Calendar, Clock, Activity, AlertTriangle, Shield } from 'lucide-react';
+import { Wind, BookOpen, Flame, TrendingUp, ArrowLeft, Sparkles, Brain, Calendar, Clock, Activity, AlertTriangle, Shield, Download, Share2 } from 'lucide-react';
 import { useApp } from '../store';
+import { useAuth } from '../auth';
 import { predictMoodTrend, type PredictionResult } from '../utils/mood-predictor';
+import { exportAsJSON, exportAsCSV, shareReport } from '../utils/export';
 
 const MOODS: Record<string, { emoji: string; color: string; bg: string }> = {
   happy: { emoji: '😊', color: '#059669', bg: '#ecfdf5' },
@@ -106,6 +108,7 @@ function MoodPredictionWidget({ entries }: { entries: Array<{ id: string; text: 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { journalEntries, breathingSessions } = useApp();
+  const { user } = useAuth();
 
   const getStreak = () => {
     const dates = new Set<string>();
@@ -168,6 +171,19 @@ export default function Dashboard() {
             <p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Your wellness journey at a glance</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            {user?.id && (
+              <>
+                <button onClick={() => exportAsJSON(user.id!)} style={{ padding: '8px 12px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Download size={14} /> JSON
+                </button>
+                <button onClick={() => exportAsCSV(user.id!)} style={{ padding: '8px 12px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Download size={14} /> CSV
+                </button>
+                <button onClick={() => shareReport(user.id!)} style={{ padding: '8px 12px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Share2 size={14} /> Share
+                </button>
+              </>
+            )}
             <button onClick={() => navigate('/app')} style={{ padding: '8px 16px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
               <ArrowLeft size={14} /> Back
             </button>
