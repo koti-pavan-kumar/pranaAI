@@ -20,8 +20,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const shouldListenRef = useRef(false);
-  const accumulatedRef = useRef('');
-  const resultCountRef = useRef(0);
+  const finalTextRef = useRef('');
 
   const isSupported = typeof window !== 'undefined' && (
     'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
@@ -41,99 +40,115 @@ export function useVoiceInput(): UseVoiceInputReturn {
     };
   }, []);
 
-  const createRecognition = useCallback(() => {
-    if (!SpeechRecognitionAPI) return null;
-    const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    // Always read the CURRENT language — not a stale closure value
-    const lang = getVoiceLanguage();
-    recognition.lang = lang;
-    recognition.maxAlternatives = 1;
-    console.log(`[VoiceInput] Creating recognition with lang=${lang}`);
-    return recognition;
-  }, []);
-
   const startListening = useCallback(() => {
     if (!isSupported) {
       setError('Speech recognition is not supported in this browser. Use Chrome, Edge, or Safari.');
       return;
     }
-
     if (!SpeechRecognitionAPI) return;
 
-    // Stop any existing recognition first
+    // Stop any existing recognition
     if (recognitionRef.current) {
       recognitionRef.current.abort();
     }
 
-    const recognition = createRecognition();
-    if (!recognition) return;
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    const lang = getVoiceLanguage();
+    recognition.lang = lang;
+
     recognitionRef.current = recognition;
     shouldListenRef.current = true;
-    accumulatedRef.current = '';
-    resultCountRef.current = 0;
+    finalTextRef.current = '';
+
+    // Track ALL final results by index to prevent duplicates
+    const processedIndices = new Set<number>();
 
     recognition.onresult = (event: any) => {
       let newFinal = '';
       let interim = '';
 
-      for (let i = resultCountRef.current; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
-        if (result.isFinal) {
-          newFinal += result[0].transcript;
-          resultCountRef.current = i + 1;
-        } else {
+        if (result.isFinal && !processedIndices.has(i)) {
+          // Only process this result ONCE
+          processedIndices.add(i);
+          const text = result[0].transcript.trim();
+          if (text) {
+            newFinal += (newFinal ? ' ' : '') + text;
+          }
+        } else if (!result.isFinal) {
           interim += result[0].transcript;
         }
       }
 
       if (newFinal) {
-        // Add space between phrases if there isn't one already
-        const trimmed = accumulatedRef.current.trimEnd();
-        const newTrimmed = newFinal.trimStart();
-        if (trimmed && newTrimmed) {
-          accumulatedRef.current = trimmed + ' ' + newTrimmed;
-        } else {
-          accumulatedRef.current = trimmed + newTrimmed;
-        }
+        finalTextRef.current = finalTextRef.current
+          ? finalTextRef.current + ' ' + newFinal
+          : newFinal;
       }
 
-      setTranscript(accumulatedRef.current);
+      setTranscript(finalTextRef.current);
       setInterimTranscript(interim);
     };
 
     recognition.onerror = (event: any) => {
-      console.error('[VoiceInput] Error:', event.error);
       if (event.error === 'not-allowed') {
         setError('Microphone access denied. Please allow microphone permission and try again.');
         setIsListening(false);
         shouldListenRef.current = false;
-      } else if (event.error === 'no-speech') {
-        // No speech detected — this is normal, just keep listening
-        console.log('[VoiceInput] No speech detected, continuing...');
       } else if (event.error === 'audio-capture') {
         setError('No microphone found. Please connect a microphone.');
         setIsListening(false);
         shouldListenRef.current = false;
-      } else if (event.error !== 'aborted' && event.error !== 'network') {
-        setError(`Speech error: ${event.error}`);
+      } else if (event.error !== 'aborted' && event.error !== 'no-speech' && event.error !== 'network') {
+        console.error('[VoiceInput] Error:', event.error);
       }
     };
 
     recognition.onend = () => {
+      // Chrome auto-stops after ~60s silence. Restart automatically.
       if (shouldListenRef.current) {
         try {
-          const newRecognition = createRecognition();
-          if (newRecognition) {
-            recognitionRef.current = newRecognition;
-            // Reset result count — new recognition starts fresh at index 0
-            resultCountRef.current = 0;
-            newRecognition.onresult = recognition.onresult;
-            newRecognition.onerror = recognition.onerror;
-            newRecognition.onend = recognition.onend;
-            newRecognition.start();
-          }
+          const newLang = getVoiceLanguage();
+          const newRecognition = new SpeechRecognitionAPI();
+          newRecognition.continuous = true;
+          newRecognition.interimResults = true;
+          newRecognition.maxAlternatives = 1;
+          newRecognition.lang = newLang;
+
+          recognitionRef.current = newRecognition;
+
+          // NEW result index tracker for the new session
+          const newProcessedIndices = new Set<number>();
+
+          newRecognition.onresult = (e: any) => {
+            let newF = '';
+            let interim2 = '';
+            for (let i = 0; i < e.results.length; i++) {
+              const r = e.results[i];
+              if (r.isFinal && !newProcessedIndices.has(i)) {
+                newProcessedIndices.add(i);
+                const t = r[0].transcript.trim();
+                if (t) newF += (newF ? ' ' : '') + t;
+              } else if (!r.isFinal) {
+                interim2 += r[0].transcript;
+              }
+            }
+            if (newF) {
+              finalTextRef.current = finalTextRef.current
+                ? finalTextRef.current + ' ' + newF
+                : newF;
+            }
+            setTranscript(finalTextRef.current);
+            setInterimTranscript(interim2);
+          };
+
+          newRecognition.onerror = recognition.onerror;
+          newRecognition.onend = recognition.onend;
+          newRecognition.start();
         } catch (e) {
           console.error('[VoiceInput] Failed to restart:', e);
           setIsListening(false);
@@ -148,12 +163,11 @@ export function useVoiceInput(): UseVoiceInputReturn {
       recognition.start();
       setIsListening(true);
       setError(null);
-      console.log('[VoiceInput] Started — speak now!');
     } catch (e) {
       console.error('[VoiceInput] Failed to start:', e);
       setError('Failed to start speech recognition. Please try again.');
     }
-  }, [isSupported, createRecognition]);
+  }, [isSupported, SpeechRecognitionAPI]);
 
   const stopListening = useCallback(() => {
     shouldListenRef.current = false;
@@ -167,8 +181,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
   const resetTranscript = useCallback(() => {
     setTranscript('');
     setInterimTranscript('');
-    accumulatedRef.current = '';
-    resultCountRef.current = 0;
+    finalTextRef.current = '';
   }, []);
 
   return {

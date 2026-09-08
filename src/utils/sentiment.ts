@@ -18,6 +18,19 @@ interface SentimentResult {
  * Uses real ONNX inference when available
  */
 export async function analyzeSentimentAsync(text: string): Promise<SentimentResult> {
+  // Skip ONNX for Hindi/Devanagari and Hinglish — the model only understands English
+  const hasDevanagari = /[\u0900-\u097F]/.test(text);
+  if (hasDevanagari) {
+    return analyzeSentiment(text);
+  }
+
+  // For Roman text, check if it's Hinglish (skip ONNX for Hinglish too)
+  const lower = text.toLowerCase();
+  if (detectRomanHindi(lower)) {
+    return analyzeSentiment(text);
+  }
+
+  // Pure English text — try ONNX first
   try {
     const analyzer = await getSentimentAnalyzer();
     const result = await analyzer.analyze(text);
