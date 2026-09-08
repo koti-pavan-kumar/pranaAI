@@ -7,9 +7,8 @@ import App from './App';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(
-      (reg) => {
+      () => {
         console.log('[PWA] Service Worker registered');
-        // Pre-cache all lazy chunks on first visit
         preloadAllChunks();
       },
       (err) => console.log('[PWA] SW failed:', err)
