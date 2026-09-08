@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wind, BookOpen, Flame, TrendingUp, ArrowLeft, Sparkles, Brain, Calendar, Clock } from 'lucide-react';
+import { Wind, BookOpen, Flame, TrendingUp, ArrowLeft, Sparkles, Brain, Calendar, Clock, Activity, AlertTriangle, Shield } from 'lucide-react';
 import { useApp } from '../store';
+import { predictMoodTrend, type PredictionResult } from '../utils/mood-predictor';
 
 const MOODS: Record<string, { emoji: string; color: string; bg: string }> = {
   happy: { emoji: '😊', color: '#059669', bg: '#ecfdf5' },
@@ -19,6 +21,87 @@ const Container = ({ children }: { children: React.ReactNode }) => (
 const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
   <div style={{ background: 'white', border: '1px solid #e8edf2', borderRadius: 18, padding: 24, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', ...style }}>{children}</div>
 );
+
+/**
+ * ML Mood Prediction Widget
+ * Shows predicted mood, trend, risk level, and insights
+ */
+function MoodPredictionWidget({ entries }: { entries: Array<{ id: string; text: string; mood: string; sentimentScore: number; tags: string[]; timestamp: number }> }) {
+  const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+
+  useEffect(() => {
+    // Convert store entries to predictor format
+    const journalEntries = entries.map(e => ({
+      id: e.id,
+      text: e.text,
+      mood: e.mood as import('../utils/sentiment').Mood,
+      sentimentScore: e.sentimentScore,
+      tags: e.tags,
+      createdAt: new Date(e.timestamp).toISOString(),
+    }));
+    const result = predictMoodTrend(journalEntries);
+    setPrediction(result);
+  }, [entries]);
+
+  if (!prediction) return null;
+
+  const riskColors: Record<string, { bg: string; text: string; border: string }> = {
+    low: { bg: '#d1fae5', text: '#059669', border: '#a7f3d0' },
+    moderate: { bg: '#fef3c7', text: '#d97706', border: '#fde68a' },
+    elevated: { bg: '#fee2e2', text: '#dc2626', border: '#fecaca' },
+    high: { bg: '#fecaca', text: '#991b1b', border: '#fca5a5' },
+  };
+
+  const trendIcons: Record<string, string> = {
+    improving: '📈',
+    declining: '📉',
+    stable: '➡️',
+    volatile: '📊',
+  };
+
+  const moodEmojis = MOODS;
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+      {/* Predicted Mood */}
+      <div style={{ textAlign: 'center', padding: 16, background: '#f8fafc', borderRadius: 14 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Predicted Mood</p>
+        <span style={{ fontSize: 36 }}>{moodEmojis[prediction.predictedMood]?.emoji || '😐'}</span>
+        <p style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', marginTop: 6, textTransform: 'capitalize' }}>{prediction.predictedMood}</p>
+        <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Confidence: {prediction.confidence}%</p>
+      </div>
+
+      {/* Mood Trend */}
+      <div style={{ textAlign: 'center', padding: 16, background: '#f8fafc', borderRadius: 14 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trend</p>
+        <span style={{ fontSize: 36 }}>{trendIcons[prediction.trend.direction]}</span>
+        <p style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginTop: 6, textTransform: 'capitalize' }}>{prediction.trend.direction}</p>
+        <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Strength: {prediction.trend.strength}%</p>
+      </div>
+
+      {/* Risk Level */}
+      <div style={{ textAlign: 'center', padding: 16, background: riskColors[prediction.riskLevel].bg, borderRadius: 14, border: `1px solid ${riskColors[prediction.riskLevel].border}` }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: riskColors[prediction.riskLevel].text, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Risk Level</p>
+        {prediction.riskLevel === 'low' ? <Shield size={36} color={riskColors[prediction.riskLevel].text} /> : <AlertTriangle size={36} color={riskColors[prediction.riskLevel].text} />}
+        <p style={{ fontSize: 14, fontWeight: 700, color: riskColors[prediction.riskLevel].text, marginTop: 6, textTransform: 'capitalize' }}>{prediction.riskLevel}</p>
+        <p style={{ fontSize: 11, color: riskColors[prediction.riskLevel].text, marginTop: 4, opacity: 0.8 }}>{prediction.riskFactors[0] || 'No issues detected'}</p>
+      </div>          {/* Insights (full width) */}
+          {prediction.insights.length > 0 && (
+            <div style={{ gridColumn: '1 / -1', padding: 16, background: '#f0fdfa', borderRadius: 14, border: '1px solid #ccfbf1' }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: '#0d9488', marginBottom: 10 }}>🧠 AI Insights</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {prediction.insights.map((insight: string, i: number) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#14b8a6', marginTop: 5, flexShrink: 0 }} />
+                    <p style={{ fontSize: 12, color: '#334155', lineHeight: 1.5 }}>{insight}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -149,6 +232,23 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          </Card>
+        </motion.div>
+
+        {/* ML Mood Prediction */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <Card style={{ padding: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Brain size={18} color="#8b5cf6" />
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>AI Mood Prediction</h3>
+              </div>
+              <span style={{ padding: '4px 12px', borderRadius: 8, background: '#faf5ff', fontSize: 12, fontWeight: 600, color: '#7c3aed', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Activity size={14} /> ML Engine
+              </span>
+            </div>
+
+            <MoodPredictionWidget entries={journalEntries} />
           </Card>
         </motion.div>
 

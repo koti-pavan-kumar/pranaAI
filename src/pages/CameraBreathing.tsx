@@ -153,8 +153,80 @@ export default function CameraBreathing() {
             </Card>
           </motion.div>
 
-          {/* AI Feedback */}
+          {/* ML Pattern Classification */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+            <Card style={{ borderLeft: `4px solid ${sessionStats.patternClassification.healthImpact === 'positive' ? '#10b981' : sessionStats.patternClassification.healthImpact === 'negative' ? '#ef4444' : '#f59e0b'}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>{sessionStats.patternClassification.pattern === 'calm' ? '🧘' : sessionStats.patternClassification.pattern === 'stress' ? '😰' : sessionStats.patternClassification.pattern === 'deep' ? '🫁' : sessionStats.patternClassification.pattern === 'shallow' ? '😤' : sessionStats.patternClassification.pattern === 'irregular' ? '〰️' : '💪'}</span>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Breathing Pattern</h3>
+                </div>
+                <div style={{ padding: '4px 10px', borderRadius: 8, background: sessionStats.patternClassification.healthImpact === 'positive' ? '#d1fae5' : sessionStats.patternClassification.healthImpact === 'negative' ? '#fee2e2' : '#fef3c7', fontSize: 11, fontWeight: 700, color: sessionStats.patternClassification.healthImpact === 'positive' ? '#059669' : sessionStats.patternClassification.healthImpact === 'negative' ? '#dc2626' : '#d97706' }}>
+                  {sessionStats.patternClassification.pattern.toUpperCase()} · {sessionStats.patternClassification.confidence}%
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.5, marginBottom: 8 }}>{sessionStats.patternClassification.description}</p>
+              <div style={{ background: '#f8fafc', borderRadius: 10, padding: 12, marginTop: 8 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#0891b2', marginBottom: 4 }}>💡 Recommendation</p>
+                <p style={{ fontSize: 12, color: '#475569', lineHeight: 1.5 }}>{sessionStats.patternClassification.recommendation}</p>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Stress Analysis */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}>
+            <Card>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>🧠</span>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>Stress Analysis</h3>
+                </div>
+                <div style={{ padding: '4px 10px', borderRadius: 8, background: sessionStats.stressAnalysis.stressScore < 30 ? '#d1fae5' : sessionStats.stressAnalysis.stressScore < 60 ? '#fef3c7' : '#fee2e2', fontSize: 11, fontWeight: 700, color: sessionStats.stressAnalysis.stressScore < 30 ? '#059669' : sessionStats.stressAnalysis.stressScore < 60 ? '#d97706' : '#dc2626' }}>
+                  {sessionStats.stressAnalysis.stressLevel.toUpperCase()} · {sessionStats.stressAnalysis.stressScore}/100
+                </div>
+              </div>
+              {/* Stress Score Bar */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>Relaxed</span>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>Stressed</span>
+                </div>
+                <div style={{ height: 10, background: '#f1f5f9', borderRadius: 5, overflow: 'hidden' }}>
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${sessionStats.stressAnalysis.stressScore}%` }} transition={{ delay: 0.7, duration: 1.2, ease: 'easeOut' }}
+                    style={{ height: '100%', borderRadius: 5, background: sessionStats.stressAnalysis.stressScore < 30 ? 'linear-gradient(90deg, #10b981, #059669)' : sessionStats.stressAnalysis.stressScore < 60 ? 'linear-gradient(90deg, #f59e0b, #d97706)' : 'linear-gradient(90deg, #ef4444, #dc2626)' }} />
+                </div>
+              </div>
+              {/* Indicators */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {sessionStats.stressAnalysis.indicators.map((indicator, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#f8fafc', borderRadius: 8 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: sessionStats.stressAnalysis.stressScore < 30 ? '#10b981' : sessionStats.stressAnalysis.stressScore < 60 ? '#f59e0b' : '#ef4444', flexShrink: 0 }} />
+                    <p style={{ fontSize: 12, color: '#475569' }}>{indicator}</p>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 10 }}>Confidence: {sessionStats.stressAnalysis.confidence}%</p>
+            </Card>
+          </motion.div>
+
+          {/* Signal Quality */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+            <Card style={{ padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Cpu size={16} color="#6366f1" />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Signal Quality</span>
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700, color: sessionStats.rawSignalQuality > 70 ? '#059669' : sessionStats.rawSignalQuality > 40 ? '#d97706' : '#dc2626' }}>{sessionStats.rawSignalQuality}%</span>
+              </div>
+              <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>
+                {sessionStats.rawSignalQuality > 70 ? 'High-quality camera data — results are reliable' : sessionStats.rawSignalQuality > 40 ? 'Moderate signal — try better lighting or closer positioning' : 'Low signal quality — reposition camera for accurate detection'}
+              </p>
+            </Card>
+          </motion.div>
+
+          {/* AI Feedback */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }}>
             <Card style={{ borderLeft: '4px solid #14b8a6' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <span style={{ fontSize: 18 }}>🤖</span>

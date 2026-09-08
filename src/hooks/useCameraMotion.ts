@@ -1,5 +1,22 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 
+export type BreathingPattern = 'normal' | 'shallow' | 'deep' | 'irregular' | 'stress' | 'calm';
+
+export interface PatternClassification {
+  pattern: BreathingPattern;
+  confidence: number; // 0-100
+  description: string;
+  healthImpact: 'positive' | 'neutral' | 'negative';
+  recommendation: string;
+}
+
+export interface StressAnalysis {
+  stressScore: number; // 0-100 (0=relaxed, 100=very stressed)
+  stressLevel: 'relaxed' | 'mild' | 'moderate' | 'high' | 'severe';
+  indicators: string[];
+  confidence: number;
+}
+
 export interface SessionStats {
   duration: number;
   breathCount: number;
@@ -9,6 +26,9 @@ export interface SessionStats {
   avgMotionLevel: number;
   feedback: string;
   improvements: string[];
+  patternClassification: PatternClassification;
+  stressAnalysis: StressAnalysis;
+  rawSignalQuality: number; // 0-100, how reliable is the camera data
 }
 
 interface UseCameraMotionReturn {
@@ -367,6 +387,11 @@ export function useCameraMotion(): UseCameraMotionReturn {
     const feedback = generateFeedback(duration, breathCount, avgBreathingRate, consistency, phaseDistribution, avgMotionLevel);
     const improvements = generateImprovements(duration, avgBreathingRate, consistency, phaseDistribution, avgMotionLevel);
 
+    // ML Classification
+    const patternClassification = classifyBreathingPattern(avgBreathingRate, consistency, phaseDistribution, avgMotionLevel, duration);
+    const stressAnalysis = calculateStressAnalysis(avgBreathingRate, consistency, phaseDistribution, avgMotionLevel, duration);
+    const rawSignalQuality = estimateSignalQuality(avgMotionLevel, consistency, duration, avgBreathingRate);
+
     return {
       duration,
       breathCount,
@@ -376,6 +401,9 @@ export function useCameraMotion(): UseCameraMotionReturn {
       avgMotionLevel,
       feedback,
       improvements,
+      patternClassification,
+      stressAnalysis,
+      rawSignalQuality,
     };
   }, [breathingRate]);
 
@@ -402,6 +430,246 @@ export function useCameraMotion(): UseCameraMotionReturn {
     stopCamera,
     getSessionStats,
   };
+}
+
+/**
+ * Classify breathing pattern using signal features
+ * This is a rule-based classifier using medical breathing norms
+ */
+function classifyBreathingPattern(
+  rate: number,
+  consistency: number,
+  phases: { inhale: number; exhale: number; rest: number },
+  avgMotion: number,
+  duration: number,
+): PatternClassification {
+  // Not enough data
+  if (duration < 10 || rate === 0) {
+    return {
+      pattern: 'normal',
+      confidence: 20,
+      description: 'Insufficient data for classification.',
+      healthImpact: 'neutral',
+      recommendation: 'Continue breathing for at least 30 seconds for accurate analysis.',
+    };
+  }
+
+  const balance = Math.abs(phases.inhale - phases.exhale);
+  const restRatio = phases.rest / 100;
+
+  // Feature vector for classification
+  const features = {
+    rate,
+    consistency,
+    balance,
+    restRatio,
+    motionAmplitude: avgMotion,
+  };
+
+  // Classification rules based on medical breathing norms
+  // Normal: 12-20 BPM, consistent, balanced phases
+  // Shallow: >20 BPM, low motion amplitude
+  // Deep: <12 BPM, high motion amplitude
+  // Irregular: low consistency, high variance
+  // Stress: >20 BPM, low consistency, high rest ratio
+  // Calm: 10-15 BPM, high consistency, balanced
+
+  let pattern: BreathingPattern = 'normal';
+  let confidence = 50;
+  let description = '';
+  let healthImpact: 'positive' | 'neutral' | 'negative' = 'neutral';
+  let recommendation = '';
+
+  // Stress detection (highest priority)
+  if (features.rate > 20 && features.consistency < 50) {
+    pattern = 'stress';
+    confidence = Math.min(90, 70 + (features.rate - 20) * 2);
+    description = `Elevated breathing rate (${rate} BPM) with irregular rhythm indicates stress response.`;
+    healthImpact = 'negative';
+    recommendation = 'Try the 4-7-8 breathing technique: inhale 4s, hold 7s, exhale 8s. Practice for 5 minutes.';
+  }
+  // Irregular detection
+  else if (features.consistency < 35) {
+    pattern = 'irregular';
+    confidence = Math.min(85, 60 + (35 - features.consistency));
+    description = `Breathing rhythm is inconsistent (${consistency}% consistency). This may indicate anxiety or uneven breathing.`;
+    healthImpact = 'neutral';
+    recommendation = 'Use a guided breathing pattern (Box Breathing or 4-7-8) to build rhythmic consistency.';
+  }
+  // Shallow breathing
+  else if (features.rate > 20 && features.motionAmplitude < 0.3) {
+    pattern = 'shallow';
+    confidence = Math.min(88, 65 + (features.rate - 20) * 3);
+    description = `Fast but shallow breathing (${rate} BPM, low chest movement). Common during anxiety or screen time.`;
+    healthImpact = 'negative';
+    recommendation = 'Practice diaphragmatic breathing: place hand on belly, feel it rise on inhale. Aim for deep, slow breaths.';
+  }
+  // Deep breathing
+  else if (features.rate < 12 && features.motionAmplitude > 0.4) {
+    pattern = 'deep';
+    confidence = Math.min(92, 70 + (12 - features.rate) * 3);
+    description = `Deep, slow breathing (${rate} BPM) with significant chest movement. Excellent for relaxation and oxygen exchange.`;
+    healthImpact = 'positive';
+    recommendation = 'Outstanding! This breathing pattern activates the parasympathetic nervous system. Maintain this practice.';
+  }
+  // Calm breathing
+  else if (features.rate >= 10 && features.rate <= 15 && features.consistency > 70) {
+    pattern = 'calm';
+    confidence = Math.min(95, 75 + features.consistency * 0.2);
+    description = `Calm, controlled breathing (${rate} BPM) with excellent consistency (${consistency}%). Optimal for mental clarity.`;
+    healthImpact = 'positive';
+    recommendation = 'Perfect breathing pattern! Regular practice at this level significantly reduces cortisol and improves focus.';
+  }
+  // Normal breathing
+  else {
+    pattern = 'normal';
+    confidence = Math.min(80, 50 + features.consistency * 0.3);
+    description = `Normal breathing pattern (${rate} BPM) with ${consistency > 60 ? 'good' : 'moderate'} rhythm.`;
+    healthImpact = 'neutral';
+    recommendation = 'Good baseline. Try to maintain consistency above 70% for optimal wellness benefits.';
+  }
+
+  return { pattern, confidence, description, healthImpact, recommendation };
+}
+
+/**
+ * Calculate stress score from breathing metrics
+ * Uses weighted combination of physiological indicators
+ */
+function calculateStressAnalysis(
+  rate: number,
+  consistency: number,
+  phases: { inhale: number; exhale: number; rest: number },
+  avgMotion: number,
+  duration: number,
+): StressAnalysis {
+  if (duration < 10 || rate === 0) {
+    return {
+      stressScore: 50,
+      stressLevel: 'moderate',
+      indicators: ['Insufficient data for stress analysis'],
+      confidence: 15,
+    };
+  }
+
+  const indicators: string[] = [];
+  let score = 0;
+  let totalWeight = 0;
+
+  // Factor 1: Breathing rate (weight: 30)
+  // Normal resting rate: 12-20 BPM
+  // >20 = stressed, <10 = very relaxed
+  const rateWeight = 30;
+  let rateScore = 0;
+  if (rate > 20) {
+    rateScore = Math.min(100, 60 + (rate - 20) * 5);
+    indicators.push(`Elevated breathing rate (${rate} BPM)`);
+  } else if (rate < 12) {
+    rateScore = Math.max(0, 40 - (12 - rate) * 8);
+  } else {
+    rateScore = 25; // Normal range
+  }
+  score += rateScore * rateWeight;
+  totalWeight += rateWeight;
+
+  // Factor 2: Breathing consistency (weight: 25)
+  // Low consistency = high stress
+  const consistencyWeight = 25;
+  const consistencyScore = Math.max(0, 100 - consistency);
+  if (consistency < 40) {
+    indicators.push(`Irregular breathing rhythm (${consistency}% consistency)`);
+  }
+  score += consistencyScore * consistencyWeight;
+  totalWeight += consistencyWeight;
+
+  // Factor 3: Phase balance (weight: 20)
+  // Imbalanced inhale/exhale = stress
+  const balanceWeight = 20;
+  const balance = Math.abs(phases.inhale - phases.exhale);
+  const balanceScore = Math.min(100, balance * 3);
+  if (balance > 20) {
+    indicators.push(`Unbalanced breathing phases (${balance}% difference)`);
+  }
+  score += balanceScore * balanceWeight;
+  totalWeight += balanceWeight;
+
+  // Factor 4: Rest ratio (weight: 15)
+  // High rest = possible breath-holding (stress response)
+  const restWeight = 15;
+  const restScore = phases.rest > 25 ? Math.min(100, (phases.rest - 25) * 4) : 0;
+  if (phases.rest > 25) {
+    indicators.push(`Frequent breath-holding (${phases.rest}% rest phase)`);
+  }
+  score += restScore * restWeight;
+  totalWeight += restWeight;
+
+  // Factor 5: Motion amplitude (weight: 10)
+  // Very low motion = shallow breathing (stress indicator)
+  const motionWeight = 10;
+  const motionScore = avgMotion < 0.1 ? 70 : avgMotion < 0.2 ? 40 : 10;
+  if (avgMotion < 0.15) {
+    indicators.push('Low chest movement detected (shallow breathing)');
+  }
+  score += motionScore * motionWeight;
+  totalWeight += motionWeight;
+
+  // Calculate final score (0-100)
+  const stressScore = Math.round(totalWeight > 0 ? score / totalWeight : 50);
+
+  // Determine stress level
+  let stressLevel: StressAnalysis['stressLevel'];
+  if (stressScore < 20) stressLevel = 'relaxed';
+  else if (stressScore < 40) stressLevel = 'mild';
+  else if (stressScore < 60) stressLevel = 'moderate';
+  else if (stressScore < 80) stressLevel = 'high';
+  else stressLevel = 'severe';
+
+  // Confidence based on data quality
+  const confidence = Math.min(95, Math.round(
+    (duration > 30 ? 30 : duration) +
+    (consistency > 20 ? 25 : consistency * 1.25) +
+    (rate > 0 ? 20 : 0) +
+    (avgMotion > 0.05 ? 20 : avgMotion * 400)
+  ));
+
+  if (indicators.length === 0) {
+    indicators.push('Breathing metrics within normal ranges');
+  }
+
+  return { stressScore, stressLevel, indicators, confidence };
+}
+
+/**
+ * Estimate signal quality from motion data
+ */
+function estimateSignalQuality(
+  avgMotion: number,
+  consistency: number,
+  duration: number,
+  rate: number,
+): number {
+  let quality = 0;
+
+  // Motion amplitude (good signal needs visible motion)
+  if (avgMotion > 0.3) quality += 35;
+  else if (avgMotion > 0.15) quality += 25;
+  else if (avgMotion > 0.05) quality += 15;
+  else quality += 5;
+
+  // Consistency (consistent signal = reliable)
+  quality += Math.round(consistency * 0.3);
+
+  // Duration (longer = more reliable)
+  if (duration > 60) quality += 20;
+  else if (duration > 30) quality += 15;
+  else if (duration > 10) quality += 10;
+  else quality += 3;
+
+  // Valid breathing rate detected
+  if (rate > 5 && rate < 30) quality += 15;
+  else if (rate > 0) quality += 5;
+
+  return Math.min(100, quality);
 }
 
 function generateFeedback(
