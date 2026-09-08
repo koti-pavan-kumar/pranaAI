@@ -109,54 +109,9 @@ export function useVoiceInput(): UseVoiceInputReturn {
     };
 
     recognition.onend = () => {
-      // Chrome auto-stops after ~60s silence. Restart automatically.
-      if (shouldListenRef.current) {
-        try {
-          const newLang = getVoiceLanguage();
-          const newRecognition = new SpeechRecognitionAPI();
-          newRecognition.continuous = true;
-          newRecognition.interimResults = true;
-          newRecognition.maxAlternatives = 1;
-          newRecognition.lang = newLang;
-
-          recognitionRef.current = newRecognition;
-
-          // NEW result index tracker for the new session
-          const newProcessedIndices = new Set<number>();
-
-          newRecognition.onresult = (e: any) => {
-            let newF = '';
-            let interim2 = '';
-            for (let i = 0; i < e.results.length; i++) {
-              const r = e.results[i];
-              if (r.isFinal && !newProcessedIndices.has(i)) {
-                newProcessedIndices.add(i);
-                const t = r[0].transcript.trim();
-                if (t) newF += (newF ? ' ' : '') + t;
-              } else if (!r.isFinal) {
-                interim2 += r[0].transcript;
-              }
-            }
-            if (newF) {
-              finalTextRef.current = finalTextRef.current
-                ? finalTextRef.current + ' ' + newF
-                : newF;
-            }
-            setTranscript(finalTextRef.current);
-            setInterimTranscript(interim2);
-          };
-
-          newRecognition.onerror = recognition.onerror;
-          newRecognition.onend = recognition.onend;
-          newRecognition.start();
-        } catch (e) {
-          console.error('[VoiceInput] Failed to restart:', e);
-          setIsListening(false);
-          shouldListenRef.current = false;
-        }
-      } else {
-        setIsListening(false);
-      }
+      // Chrome stops after ~60s silence. Don't auto-restart to prevent
+      // text duplication. User clicks mic button to continue.
+      setIsListening(false);
     };
 
     try {
