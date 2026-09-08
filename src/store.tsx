@@ -1,11 +1,18 @@
 /**
- * App State Store — Supabase persistence with localStorage fallback
- * Saves all user data to Supabase when configured, falls back to localStorage
+ * App State Store — IndexedDB for offline-first persistence
+ * No server dependency, works completely offline
  */
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { JournalEntry, BreathingSession, ChatMessage, Mood } from './types';
-import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { useAuth } from './auth';
+import {
+  addJournalEntry as dbAddJournal,
+  getJournalEntries,
+  addBreathingSession as dbAddBreathing,
+  getBreathingSessions,
+  addChatMessage as dbAddChat,
+  getChatMessages,
+} from './lib/db';
 
 interface AppState {
   journalEntries: JournalEntry[];
@@ -72,7 +79,7 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// ============ localStorage persistence ============
+// ============ localStorage persistence (fast load) ============
 
 function loadFromStorage(): Partial<AppState> {
   try {
@@ -93,94 +100,6 @@ function saveToStorage(state: AppState) {
   } catch { /* storage full */ }
 }
 
-// ============ Supabase persistence ============
-
-async function loadFromSupabase(userId: string): Promise<Partial<AppState>> {
-  if (!isSupabaseConfigured() || !supabase) return {};
-
-  try {
-    const [journalRes, sessionsRes, chatRes] = await Promise.all([
-      supabase.from('journal_entries').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
-      supabase.from('breathing_sessions').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
-      supabase.from('chat_messages').select('*').eq('user_id', userId).order('created_at', { ascending: true }).limit(100),
-    ]);
-
-    const journalEntries: JournalEntry[] = (journalRes.data || []).map((e: any) => ({
-      id: e.id,
-      timestamp: new Date(e.created_at).getTime(),
-      text: e.text,
-      mood: e.mood,
-      sentimentScore: e.sentiment_score,
-      tags: e.tags || [],
-    }));
-
-    const breathingSessions: BreathingSession[] = (sessionsRes.data || []).map((s: any) => ({
-      id: s.id,
-      timestamp: new Date(s.created_at).getTime(),
-      pattern: { name: s.pattern_name, description: s.pattern_description, inhale: 4, holdIn: 0, exhale: 4, holdOut: 0, icon: s.icon, color: s.color },
-      duration: s.duration,
-      completedCycles: s.completed_cycles,
-    }));
-
-    const chatMessages: ChatMessage[] = (chatRes.data || []).map((m: any) => ({
-      id: m.id,
-      timestamp: new Date(m.created_at).getTime(),
-      role: m.role,
-      content: m.content,
-    }));
-
-    return { journalEntries, breathingSessions, chatMessages };
-  } catch (err) {
-    console.warn('[Store] Supabase load error:', err);
-    return {};
-  }
-}
-
-async function saveJournalToSupabase(userId: string, entry: JournalEntry) {
-  if (!isSupabaseConfigured() || !supabase) return;
-  try {
-    await supabase.from('journal_entries').insert({
-      id: entry.id,
-      user_id: userId,
-      text: entry.text,
-      mood: entry.mood,
-      sentiment_score: entry.sentimentScore,
-      tags: entry.tags,
-      created_at: new Date(entry.timestamp).toISOString(),
-    });
-  } catch (err) { console.warn('[Store] Journal save error:', err); }
-}
-
-async function saveSessionToSupabase(userId: string, session: BreathingSession) {
-  if (!isSupabaseConfigured() || !supabase) return;
-  try {
-    await supabase.from('breathing_sessions').insert({
-      id: session.id,
-      user_id: userId,
-      pattern_name: session.pattern.name,
-      pattern_description: session.pattern.description,
-      duration: session.duration,
-      completed_cycles: session.completedCycles,
-      icon: session.pattern.icon,
-      color: session.pattern.color,
-      created_at: new Date(session.timestamp).toISOString(),
-    });
-  } catch (err) { console.warn('[Store] Session save error:', err); }
-}
-
-async function saveChatToSupabase(userId: string, msg: ChatMessage) {
-  if (!isSupabaseConfigured() || !supabase) return;
-  try {
-    await supabase.from('chat_messages').insert({
-      id: msg.id,
-      user_id: userId,
-      role: msg.role,
-      content: msg.content,
-      created_at: new Date(msg.timestamp).toISOString(),
-    });
-  } catch (err) { console.warn('[Store] Chat save error:', err); }
-}
-
 // ============ Provider ============
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -193,19 +112,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   });
 
-  // Load from Supabase when user logs in
+  // Load from IndexedDB when user logs in
   useEffect(() => {
     if (!user?.id) return;
 
-    loadFromSupabase(user.id).then((data) => {
-      if (Object.keys(data).length > 0) {
-        setState(prev => ({
-          ...prev,
-          ...data,
-          userName: user.name || prev.userName,
-        }));
+    async function loadUserData() {
+      try {
+        const [journal, breathing, chat] = await Promise.all([
+          getJournalEntries(user!.id!),
+          getBreathingSessions(user!.id!),
+          getChatMessages(user!.id!),
+        ]);
+
+        if (journal.length > 0 || breathing.length > 0 || chat.length > 0) {
+          setState(prev => ({
+            ...prev,
+            journalEntries: journal.length > 0 ? journal.map(e => ({
+              id: e.id,
+              timestamp: e.timestamp,
+              text: e.text,
+              mood: e.mood as Mood,
+              sentimentScore: e.sentimentScore,
+              tags: e.tags,
+            })) : prev.journalEntries,
+            breathingSessions: breathing.length > 0 ? breathing.map(s => ({
+              id: s.id,
+              timestamp: s.timestamp,
+              pattern: s.pattern as BreathingSession['pattern'],
+              duration: s.duration,
+              completedCycles: s.completedCycles,
+            })) : prev.breathingSessions,
+            chatMessages: chat.map(m => ({
+              id: m.id,
+              timestamp: m.timestamp,
+              role: m.role as 'user' | 'ai',
+              content: m.content,
+            })),
+            userName: user!.name || prev.userName,
+          }));
+        }
+      } catch (err) {
+        console.warn('[Store] IndexedDB load error:', err);
       }
-    });
+    }
+
+    loadUserData();
   }, [user?.id]);
 
   // Save to localStorage on every change
@@ -216,19 +167,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addJournalEntry = useCallback((entry: Omit<JournalEntry, 'id' | 'timestamp'>) => {
     const newEntry = { ...entry, id: generateId(), timestamp: Date.now() };
     setState(prev => ({ ...prev, journalEntries: [newEntry, ...prev.journalEntries] }));
-    if (user?.id) saveJournalToSupabase(user.id, newEntry);
+
+    // Save to IndexedDB
+    if (user?.id) {
+      dbAddJournal(user.id, {
+        text: entry.text,
+        mood: entry.mood,
+        sentimentScore: entry.sentimentScore,
+        tags: entry.tags,
+      }).catch(err => console.warn('[Store] Journal save error:', err));
+    }
   }, [user?.id]);
 
   const addBreathingSession = useCallback((session: Omit<BreathingSession, 'id' | 'timestamp'>) => {
     const newSession = { ...session, id: generateId(), timestamp: Date.now() };
     setState(prev => ({ ...prev, breathingSessions: [newSession, ...prev.breathingSessions] }));
-    if (user?.id) saveSessionToSupabase(user.id, newSession);
+
+    // Save to IndexedDB
+    if (user?.id) {
+      dbAddBreathing(user.id, {
+        pattern: session.pattern,
+        duration: session.duration,
+        completedCycles: session.completedCycles,
+      }).catch(err => console.warn('[Store] Breathing save error:', err));
+    }
   }, [user?.id]);
 
   const addChatMessage = useCallback((msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
     const newMsg = { ...msg, id: generateId(), timestamp: Date.now() };
     setState(prev => ({ ...prev, chatMessages: [...prev.chatMessages, newMsg] }));
-    if (user?.id) saveChatToSupabase(user.id, newMsg);
+
+    // Save to IndexedDB
+    if (user?.id) {
+      dbAddChat(user.id, msg.role, msg.content)
+        .catch(err => console.warn('[Store] Chat save error:', err));
+    }
   }, [user?.id]);
 
   const setCurrentMood = useCallback((mood: Mood) => {

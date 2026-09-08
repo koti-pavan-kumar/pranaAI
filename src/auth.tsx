@@ -1,9 +1,9 @@
 /**
- * Authentication System — Supabase with localStorage fallback
- * Uses Supabase Auth when configured, falls back to localStorage
+ * Authentication System — IndexedDB for offline support
+ * No server dependency, works completely offline
  */
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createUser, loginUser } from './lib/db';
 
 interface User {
   id?: string;
@@ -18,7 +18,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  isSupabase: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,7 +28,7 @@ export function useAuth(): AuthContextType {
   return ctx;
 }
 
-// ============ localStorage helpers ============
+// ============ Session helpers ============
 
 function getCurrentUser(): User | null {
   try {
@@ -50,103 +49,48 @@ function clearSession() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(getCurrentUser);
-  const [isSupabase, setIsSupabase] = useState(false);
-
-  // Check Supabase session on mount (no listener to avoid re-render issues)
-  useEffect(() => {
-    if (!isSupabaseConfigured()) return;
-    setIsSupabase(true);
-
-    // Get initial session only
-    supabase!.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const u: User = {
-          id: session.user.id,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-          email: session.user.email || '',
-        };
-        setUser(u);
-        saveSession(u);
-      }
-    });
-  }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Try Supabase first
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase!.auth.signInWithPassword({ email, password });
-        if (error) {
-          console.error('[Auth] Supabase login error:', error.message);
-          return { success: false, error: error.message };
-        }
-
-        if (data.user) {
-          const u: User = {
-            id: data.user.id,
-            name: data.user.user_metadata?.name || email.split('@')[0],
-            email: data.user.email || email,
-          };
-          setUser(u);
-          saveSession(u);
-          return { success: true };
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Login failed';
-        console.error('[Auth] Supabase login exception:', message);
-        return { success: false, error: message };
-      }
+    const result = await loginUser(email, password);
+    if (result.success && result.user) {
+      const u: User = {
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+      };
+      setUser(u);
+      saveSession(u);
+      return { success: true };
     }
-
-    // No fallback — require Supabase for real auth
-    return { success: false, error: 'Supabase not configured. Please set up the backend.' };
+    return { success: false, error: result.error };
   }, []);
 
   const register = useCallback(async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Try Supabase first
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase!.auth.signUp({
-          email,
-          password,
-          options: { data: { name } },
-        });
-        if (error) {
-          console.error('[Auth] Supabase register error:', error.message);
-          return { success: false, error: error.message };
-        }
-
-        if (data.user) {
-          const u: User = {
-            id: data.user.id,
-            name,
-            email: data.user.email || email,
-          };
-          setUser(u);
-          saveSession(u);
-          return { success: true };
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Registration failed';
-        console.error('[Auth] Supabase register exception:', message);
-        return { success: false, error: message };
+    const result = await createUser(name, email, password);
+    if (result.success) {
+      // Auto-login after registration
+      const loginResult = await loginUser(email, password);
+      if (loginResult.success && loginResult.user) {
+        const u: User = {
+          id: loginResult.user.id,
+          name: loginResult.user.name,
+          email: loginResult.user.email,
+        };
+        setUser(u);
+        saveSession(u);
+        return { success: true };
       }
     }
-
-    // No fallback — require Supabase for real auth
-    return { success: false, error: 'Supabase not configured. Please set up the backend.' };
+    return { success: false, error: result.error };
   }, []);
 
-  const logout = useCallback(async () => {
-    if (isSupabaseConfigured()) {
-      try { await supabase!.auth.signOut(); } catch { /* ignore */ }
-    }
+  const logout = useCallback(() => {
     setUser(null);
     clearSession();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout, isSupabase }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
