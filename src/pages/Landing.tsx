@@ -173,9 +173,9 @@ export default function Landing() {
         <div style={{ position: 'absolute', bottom: 40, right: 40, width: 384, height: 384, background: 'rgba(139,92,246,0.06)', borderRadius: '50%', filter: 'blur(120px)' }} />
 
         <Container>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 48, alignItems: 'center' }} className="md:grid-cols-2">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 32, alignItems: 'center' }} className="md:grid-cols-2 md:gap-12">
             {/* Left — Text */}
-            <motion.div style={{ opacity }}>
+            <motion.div style={{ opacity }} className="md:order-1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -213,19 +213,19 @@ export default function Landing() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}
+                style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}
               >
                 <button
                   onClick={() => navigate(isAuthenticated ? '/app' : '/register')}
-                  style={{ padding: '16px 32px', borderRadius: 16, background: 'linear-gradient(135deg, #14b8a6, #06b6d4)', color: 'white', fontWeight: 700, fontSize: 18, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 40px rgba(20,184,166,0.3)' }}
+                  style={{ padding: '14px 28px', borderRadius: 16, background: 'linear-gradient(135deg, #14b8a6, #06b6d4)', color: 'white', fontWeight: 700, fontSize: 16, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 10px 40px rgba(20,184,166,0.3)', flex: 1, justifyContent: 'center' }}
                 >
-                  Start Free <ArrowRight size={20} />
+                  Start Free <ArrowRight size={18} />
                 </button>
                 <button
                   onClick={() => navigate('/login')}
-                  style={{ padding: '16px 32px', borderRadius: 16, background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)', color: '#374151', fontWeight: 600, fontSize: 16, border: '1px solid rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  style={{ padding: '14px 28px', borderRadius: 16, background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(20px)', color: '#374151', fontWeight: 600, fontSize: 14, border: '1px solid rgba(255,255,255,0.5)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'center' }}
                 >
-                  <Lock size={18} /> Watch Demo
+                  <Lock size={16} /> Watch Demo
                 </button>
               </motion.div>
 
@@ -251,8 +251,8 @@ export default function Landing() {
               </motion.div>
             </motion.div>
 
-            {/* Right — Phone Mockup + Floating Elements */}
-            <motion.div style={{ y: y1, position: 'relative', display: 'flex', justifyContent: 'center' }}>
+            {/* Right — Phone Mockup + Floating Elements (hidden on mobile) */}
+            <motion.div style={{ y: y1, position: 'relative', display: 'flex', justifyContent: 'center' }} className="hidden md:flex md:order-2">
               <div style={{ position: 'relative', perspective: '1200px' }}>
                 <motion.div
                   initial={{ opacity: 0, y: 40, rotateY: -15 }}
@@ -337,7 +337,7 @@ export default function Landing() {
               AI-powered breathing, mood tracking, and wellness insights — all running on your device, never in the cloud.
             </p>
           </motion.div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }} className="md:grid-cols-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }} className="md:grid-cols-3 md:gap-6">
             <FloatingCard icon={<Wind size={22} className="text-brand-600" />} title="AI Breathing Coach" desc="4 guided breathing patterns with real-time camera detection. Watch the AI track your chest movement and guide your rhythm." delay={0} />
             <FloatingCard icon={<Mic size={22} className="text-purple-600" />} title="Voice Mood Journal" desc="Speak your thoughts — AI analyzes sentiment on-device using ONNX Runtime. Your voice never leaves your phone." delay={0.1} />
             <FloatingCard icon={<Brain size={22} className="text-cyan-600" />} title="On-Device AI" desc="Powered by TensorFlow.js BlazePose and ONNX Runtime. Real inference running on the Snapdragon NPU — no cloud needed." delay={0.2} />
@@ -357,7 +357,7 @@ export default function Landing() {
               Three steps to<br /><span className="text-gradient-teal">better breathing</span>
             </h2>
           </motion.div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }} className="md:grid-cols-3">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }} className="md:grid-cols-3 md:gap-8">
             {[
               { step: '01', title: 'Open the Camera', desc: 'Point your phone at your chest. The front camera captures your breathing movement in real-time.', icon: <Smartphone size={24} className="text-brand-600" /> },
               { step: '02', title: 'AI Detects Breathing', desc: 'TensorFlow.js BlazePose tracks 33 body landmarks. Chest expansion is measured frame-by-frame.', icon: <Brain size={24} className="text-purple-600" /> },
@@ -379,7 +379,7 @@ export default function Landing() {
       {/* ═══════════ STATS ═══════════ */}
       <section id="stats" style={{ padding: '80px 0' }} className="md:py-28">
         <Container>
-          <div className="glass" style={{ borderRadius: 24, padding: '64px 40px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div className="glass md:p-16" style={{ borderRadius: 24, padding: '40px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: 256, height: 256, background: 'rgba(204,251,241,0.5)', borderRadius: '50%', filter: 'blur(80px)' }} />
             <div className="relative">
               <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -387,7 +387,7 @@ export default function Landing() {
                   Built for the <span className="text-gradient-teal">iQOO Hackathon</span>
                 </h2>
               </motion.div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 32 }} className="md:grid-cols-4">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 }} className="md:grid-cols-4 md:gap-8">
                 <StatCounter value="6+" label="App Screens" delay={0} />
                 <StatCounter value="15ms" label="AI Inference" delay={0.1} />
                 <StatCounter value="100%" label="On-Device" delay={0.2} />
@@ -407,7 +407,7 @@ export default function Landing() {
               Powered by <span className="text-gradient-teal">cutting-edge AI</span>
             </h2>
           </motion.div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }} className="md:grid-cols-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }} className="md:grid-cols-4 md:gap-4">
             {[
               { name: 'TensorFlow.js', desc: 'Pose detection', color: 'from-orange-400 to-amber-500' },
               { name: 'ONNX Runtime', desc: 'Sentiment analysis', color: 'from-blue-400 to-indigo-500' },
@@ -429,8 +429,7 @@ export default function Landing() {
       {/* ═══════════ CTA ═══════════ */}
       <section style={{ padding: '80px 0' }} className="md:py-28">
         <div style={{ maxWidth: 896, margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="glass" style={{ borderRadius: 24, padding: '64px 48px', position: 'relative', overflow: 'hidden' }}>
+          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>              <div className="glass md:p-16" style={{ borderRadius: 24, padding: '40px 20px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(20,184,166,0.03), rgba(139,92,246,0.03))' }} />
               <div style={{ position: 'relative' }}>
                 <LungIllustration />
@@ -446,7 +445,7 @@ export default function Landing() {
                 >
                   Get Started Free <ArrowRight size={20} />
                 </button>
-                <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                   <Lock size={12} /> No credit card required · 100% free
                 </p>
               </div>
