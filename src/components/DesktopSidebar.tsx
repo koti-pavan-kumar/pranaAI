@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { Home, Wind, BookOpen, BarChart3, MessageCircle, Activity, LogOut } from 'lucide-react';
 import { useAuth } from '../auth';
 import { useNavigate } from 'react-router-dom';
+import { getLanguage, setLanguage } from '../utils/i18n';
 
 const navItems = [
   { to: '/app', icon: Home, label: 'Home' },
@@ -80,6 +81,30 @@ export default function DesktopSidebar() {
           </NavLink>
         ))}
       </div>
+
+      {/* Language Switcher */}
+      <button
+        onClick={() => setLanguage(getLanguage() === 'en' ? 'hi' : 'en')}
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          background: 'rgba(255,255,255,0.05)',
+          border: 'none',
+          color: '#64748b',
+          transition: 'all 0.2s',
+          marginBottom: 8,
+        }}
+        title={getLanguage() === 'en' ? 'हिंदी में बदलें' : 'Switch to English'}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(20,184,166,0.15)'; e.currentTarget.style.color = '#14b8a6'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#64748b'; }}
+      >
+        <span style={{ fontSize: 14, fontWeight: 700 }}>{getLanguage() === 'en' ? 'हि' : 'En'}</span>
+      </button>
 
       {/* Logout */}
       <button

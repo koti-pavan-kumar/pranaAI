@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { getVoiceLanguage } from '../utils/i18n';
 
 interface UseVoiceInputReturn {
   isListening: boolean;
@@ -44,7 +45,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
     const recognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = getVoiceLanguage(); // Supports Hindi (hi-IN) and English (en-US)
     recognition.maxAlternatives = 1;
     return recognition;
   }, []);
