@@ -7,10 +7,30 @@ import App from './App';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(
-      (reg) => console.log('[PWA] Service Worker registered:', reg.scope),
-      (err) => console.log('[PWA] Service Worker failed:', err)
+      (reg) => {
+        console.log('[PWA] Service Worker registered');
+        // Pre-cache all lazy chunks on first visit
+        preloadAllChunks();
+      },
+      (err) => console.log('[PWA] SW failed:', err)
     );
   });
+}
+
+// Pre-load all lazy chunks so they get cached by service worker
+function preloadAllChunks() {
+  // Import all page chunks in the background
+  import('./pages/Landing');
+  import('./pages/Home');
+  import('./pages/Breathing');
+  import('./pages/Journal');
+  import('./pages/Dashboard');
+  import('./pages/Chat');
+  import('./pages/Emergency');
+  import('./pages/CameraBreathing');
+  import('./pages/Telemetry');
+  import('./pages/Login');
+  import('./pages/Register');
 }
 
 // Global error handler

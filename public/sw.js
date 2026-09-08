@@ -1,26 +1,15 @@
 /**
- * PranaAI Service Worker — Offline-first PWA
- * Caches everything on first visit, serves offline from cache
+ * PranaAI Service Worker — Full offline support
+ * Caches everything as it's fetched
  */
 
-const CACHE_NAME = 'pranaai-v7';
-const OFFLINE_URL = '/';
+const CACHE_NAME = 'pranaai-v8';
 
 self.addEventListener('install', (event) => {
-  // Cache the offline page immediately
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/index.html',
-      ]).catch(() => {});
-    })
-  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // Delete old caches
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -35,38 +24,28 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Handle navigation requests (page loads)
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Cache the page for offline use
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() => {
-          // Offline — serve cached page or fallback
-          return caches.match(event.request).then((cached) => {
-            return cached || caches.match('/index.html');
-          });
-        })
-    );
-    return;
-  }
-
-  // For all other requests: network first, cache fallback
   event.respondWith(
     fetch(event.request)
       .then((response) => {
+        // Cache EVERY successful response
         if (response && response.status === 200) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, clone);
+          });
         }
         return response;
       })
       .catch(() => {
-        return caches.match(event.request);
+        // Offline — serve from cache
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          // For navigation, serve cached index
+          if (event.request.mode === 'navigate') {
+            return caches.match('/');
+          }
+          return new Response('', { status: 503 });
+        });
       })
   );
 });
