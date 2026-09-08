@@ -100,7 +100,7 @@ function StatCounter({ value, label, delay }: { value: string; label: string; de
       transition={{ duration: 0.5, delay }}
       className="text-center"
     >
-      <div className="text-4xl font-black gradient-text mb-1">{value}</div>
+      <div className="stat-value text-4xl font-black gradient-text mb-1">{value}</div>
       <div className="text-sm text-gray-500">{label}</div>
     </motion.div>
   );
@@ -133,7 +133,7 @@ export default function Landing() {
               </div>
               <span style={{ fontSize: 20, fontWeight: 800, color: '#111827' }}>PranaAI</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="hidden md:flex">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 32 }} className="landing-nav-links">
               <a href="#features" style={{ fontSize: 14, color: '#6b7280', textDecoration: 'none' }}>Features</a>
               <a href="#how-it-works" style={{ fontSize: 14, color: '#6b7280', textDecoration: 'none' }}>How it Works</a>
               <a href="#stats" style={{ fontSize: 14, color: '#6b7280', textDecoration: 'none' }}>Stats</a>
@@ -168,7 +168,7 @@ export default function Landing() {
       </nav>
 
       {/* ═══════════ HERO SECTION ═══════════ */}
-      <section style={{ position: 'relative', paddingTop: 128, paddingBottom: 80 }} className="md:pt-40 md:pb-32">
+      <section style={{ position: 'relative', paddingTop: 128, paddingBottom: 80 }} className="landing-hero md:pt-40 md:pb-32">
         <div style={{ position: 'absolute', top: 80, left: 40, width: 288, height: 288, background: 'rgba(20,184,166,0.1)', borderRadius: '50%', filter: 'blur(100px)' }} />
         <div style={{ position: 'absolute', bottom: 40, right: 40, width: 384, height: 384, background: 'rgba(139,92,246,0.06)', borderRadius: '50%', filter: 'blur(120px)' }} />
 
@@ -251,8 +251,8 @@ export default function Landing() {
               </motion.div>
             </motion.div>
 
-            {/* Right — Phone Mockup + Floating Elements (hidden on mobile) */}
-            <motion.div style={{ y: y1, position: 'relative', display: 'flex', justifyContent: 'center' }} className="hidden md:flex md:order-2">
+            {/* Right — Phone Mockup + Floating Elements */}
+            <motion.div style={{ y: y1, position: 'relative', display: 'flex', justifyContent: 'center' }} className="landing-phone-mockup md:order-2">
               <div style={{ position: 'relative', perspective: '1200px' }}>
                 <motion.div
                   initial={{ opacity: 0, y: 40, rotateY: -15 }}
@@ -364,8 +364,7 @@ export default function Landing() {
               { step: '03', title: 'Get AI Feedback', desc: 'After your session, receive personalized analysis with breathing consistency, BPM, and improvement tips.', icon: <Sparkles size={24} className="text-cyan-600" /> },
             ].map(({ step, title, desc, icon }, i) => (
               <motion.div key={step} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}>
-                <div className="glass rounded-2xl p-8 h-full widget-card">
-                  <div style={{ fontSize: 48, fontWeight: 900, color: '#ccfbf1', marginBottom: 16 }}>{step}</div>
+                <div className="glass rounded-2xl p-8 h-full widget-card">                   <div className="step-number" style={{ fontSize: 48, fontWeight: 900, color: '#ccfbf1', marginBottom: 16 }}>{step}</div>
                   <div className="p-3 rounded-xl bg-brand-50 w-fit mb-4">{icon}</div>
                   <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 12 }}>{title}</h3>
                   <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7 }}>{desc}</p>
@@ -387,7 +386,7 @@ export default function Landing() {
                   Built for the <span className="text-gradient-teal">iQOO Hackathon</span>
                 </h2>
               </motion.div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 }} className="md:grid-cols-4 md:gap-8">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 }} className="stats-grid md:grid-cols-4 md:gap-8">
                 <StatCounter value="6+" label="App Screens" delay={0} />
                 <StatCounter value="15ms" label="AI Inference" delay={0.1} />
                 <StatCounter value="100%" label="On-Device" delay={0.2} />
