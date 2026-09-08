@@ -31,12 +31,12 @@ export default function Register() {
     }
     setIsLoading(true);
     setError('');
-    const success = await register(name, email, password);
+    const result = await register(name, email, password);
     setIsLoading(false);
-    if (success) {
+    if (result.success) {
       navigate('/app');
     } else {
-      setError('Email already registered. Try signing in.');
+      setError(result.error || 'Registration failed. Please try again.');
     }
   };
 

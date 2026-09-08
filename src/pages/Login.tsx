@@ -21,12 +21,12 @@ export default function Login() {
     }
     setIsLoading(true);
     setError('');
-    const success = await login(email, password);
+    const result = await login(email, password);
     setIsLoading(false);
-    if (success) {
+    if (result.success) {
       navigate('/app');
     } else {
-      setError('Invalid credentials. Try again.');
+      setError(result.error || 'Invalid credentials. Try again.');
     }
   };
 

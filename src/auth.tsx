@@ -15,8 +15,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isSupabase: boolean;
 }
@@ -71,12 +71,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     // Try Supabase first
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase!.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          console.error('[Auth] Supabase login error:', error.message);
+          return { success: false, error: error.message };
+        }
 
         if (data.user) {
           const u: User = {
@@ -86,19 +89,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setUser(u);
           saveSession(u);
-          return true;
+          return { success: true };
         }
       } catch (err) {
-        console.warn('[Auth] Supabase login failed, trying localStorage:', err);
+        const message = err instanceof Error ? err.message : 'Login failed';
+        console.error('[Auth] Supabase login exception:', message);
+        return { success: false, error: message };
       }
     }
 
     // No fallback — require Supabase for real auth
-    console.error('[Auth] Supabase not configured. Login requires Supabase backend.');
-    return false;
+    return { success: false, error: 'Supabase not configured. Please set up the backend.' };
   }, []);
 
-  const register = useCallback(async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = useCallback(async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     // Try Supabase first
     if (isSupabaseConfigured()) {
       try {
@@ -107,7 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
           options: { data: { name } },
         });
-        if (error) throw error;
+        if (error) {
+          console.error('[Auth] Supabase register error:', error.message);
+          return { success: false, error: error.message };
+        }
 
         if (data.user) {
           const u: User = {
@@ -117,16 +124,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setUser(u);
           saveSession(u);
-          return true;
+          return { success: true };
         }
       } catch (err) {
-        console.warn('[Auth] Supabase register failed, trying localStorage:', err);
+        const message = err instanceof Error ? err.message : 'Registration failed';
+        console.error('[Auth] Supabase register exception:', message);
+        return { success: false, error: message };
       }
     }
 
     // No fallback — require Supabase for real auth
-    console.error('[Auth] Supabase not configured. Registration requires Supabase backend.');
-    return false;
+    return { success: false, error: 'Supabase not configured. Please set up the backend.' };
   }, []);
 
   const logout = useCallback(async () => {
