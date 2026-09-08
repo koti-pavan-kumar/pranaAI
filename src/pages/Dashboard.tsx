@@ -17,7 +17,7 @@ const MOODS: Record<string, { emoji: string; color: string; bg: string }> = {
 };
 
 const Container = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>{children}</div>
+  <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px' }}>{children}</div>
 );
 
 const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
@@ -61,10 +61,8 @@ function MoodPredictionWidget({ entries }: { entries: Array<{ id: string; text: 
     volatile: '📊',
   };
 
-  const moodEmojis = MOODS;
-
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+  const moodEmojis = MOODS;    return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
       {/* Predicted Mood */}
       <div style={{ textAlign: 'center', padding: 16, background: '#f8fafc', borderRadius: 14 }}>
         <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Predicted Mood</p>
@@ -162,36 +160,36 @@ export default function Dashboard() {
 
   return (
     <Container>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 80 }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a' }}>Insights</h1>
-            <p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Your wellness journey at a glance</p>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {user?.id && (
-              <>
-                <button onClick={() => exportAsJSON(user.id!)} style={{ padding: '8px 12px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Download size={14} /> JSON
-                </button>
-                <button onClick={() => exportAsCSV(user.id!)} style={{ padding: '8px 12px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Download size={14} /> CSV
-                </button>
-                <button onClick={() => shareReport(user.id!)} style={{ padding: '8px 12px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Share2 size={14} /> Share
-                </button>
-              </>
-            )}
-            <button onClick={() => navigate('/app')} style={{ padding: '8px 16px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <div>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>Insights</h1>
+              <p style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>Your wellness journey at a glance</p>
+            </div>
+            <button onClick={() => navigate('/app')} style={{ padding: '8px 14px', borderRadius: 10, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
               <ArrowLeft size={14} /> Back
             </button>
           </div>
+          {user?.id && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
+              <button onClick={() => exportAsJSON(user.id!)} style={{ padding: '7px 12px', borderRadius: 8, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Download size={13} /> JSON
+              </button>
+              <button onClick={() => exportAsCSV(user.id!)} style={{ padding: '7px 12px', borderRadius: 8, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Download size={13} /> CSV
+              </button>
+              <button onClick={() => shareReport(user.id!)} style={{ padding: '7px 12px', borderRadius: 8, background: 'white', border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 600, color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Share2 size={13} /> Share
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Stats Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {[
             { icon: <Wind size={20} />, label: 'Sessions', value: totalSessions.toString(), color: '#0d9488', bg: '#f0fdfa' },
             { icon: <BookOpen size={20} />, label: 'Journal Entries', value: totalEntries.toString(), color: '#7c3aed', bg: '#faf5ff' },
@@ -269,7 +267,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Bottom Row: Recommendations + Mood Distribution */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
 
           {/* Personalized Recommendations */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
