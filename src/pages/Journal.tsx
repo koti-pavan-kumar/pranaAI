@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
-import { Mic, MicOff, Send, ChevronDown, ChevronUp, Sparkles, BookOpen } from 'lucide-react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Mic, MicOff, Send, ChevronDown, ChevronUp, Sparkles, BookOpen, AlertCircle } from 'lucide-react';
 import { useApp } from '../store';
 import { analyzeSentiment, analyzeSentimentAsync } from '../utils/sentiment';
 import { useVoiceInput } from '../hooks/useVoiceInput';
@@ -20,7 +20,15 @@ export default function Journal() {
   const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
   const [showEntries, setShowEntries] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{ mood: Mood; score: number; tags: string[] } | null>(null);
-  const { isListening, startListening, stopListening } = useVoiceInput();
+  const { isListening, transcript, startListening, stopListening, error: voiceError, isSupported } = useVoiceInput();
+
+  // Sync voice transcript to textarea
+  useEffect(() => {
+    if (transcript) {
+      setText(transcript);
+      scheduleAnalysis(transcript);
+    }
+  }, [transcript]);
 
   const analyzeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -58,7 +66,7 @@ export default function Journal() {
         <Content
           text={text} setText={setText} selectedMood={selectedMood} setSelectedMood={setSelectedMood}
           showEntries={showEntries} setShowEntries={setShowEntries} analysisResult={analysisResult}
-          isListening={isListening} startListening={startListening} stopListening={stopListening}
+          isListening={isListening} startListening={startListening} stopListening={stopListening}            voiceError={voiceError} isSupported={isSupported}
           handleSubmit={handleSubmit} scheduleAnalysis={scheduleAnalysis} journalEntries={journalEntries}
         />
       </div>
@@ -69,6 +77,7 @@ export default function Journal() {
             text={text} setText={setText} selectedMood={selectedMood} setSelectedMood={setSelectedMood}
             showEntries={showEntries} setShowEntries={setShowEntries} analysisResult={analysisResult}
             isListening={isListening} startListening={startListening} stopListening={stopListening}
+            voiceError={voiceError} isSupported={isSupported}
             handleSubmit={handleSubmit} scheduleAnalysis={scheduleAnalysis} journalEntries={journalEntries}
           />
         </div>
@@ -78,12 +87,13 @@ export default function Journal() {
 }
 
 // Content component defined OUTSIDE to prevent re-mount on every render
-function Content({ text, setText, selectedMood, setSelectedMood, showEntries, setShowEntries, analysisResult, isListening, startListening, stopListening, handleSubmit, scheduleAnalysis, journalEntries }: {
+function Content({ text, setText, selectedMood, setSelectedMood, showEntries, setShowEntries, analysisResult, isListening, startListening, stopListening, voiceError, isSupported, handleSubmit, scheduleAnalysis, journalEntries }: {
   text: string; setText: (v: string) => void;
   selectedMood: Mood | null; setSelectedMood: (m: Mood | null) => void;
   showEntries: boolean; setShowEntries: (v: boolean) => void;
   analysisResult: { mood: Mood; score: number; tags: string[] } | null;
   isListening: boolean; startListening: () => void; stopListening: () => void;
+  voiceError: string | null; isSupported: boolean;
   handleSubmit: () => void; scheduleAnalysis: (text: string) => void;
   journalEntries: Array<{ id: string; text: string; mood: string; timestamp: number; sentimentScore: number; tags: string[] }>;
 }) {
@@ -106,12 +116,26 @@ function Content({ text, setText, selectedMood, setSelectedMood, showEntries, se
 
         {/* Voice + Mood Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
             <button onClick={isListening ? stopListening : () => startListening()}
-              style={{ width: 40, height: 40, borderRadius: 10, background: isListening ? '#fef2f2' : '#f0fdfa', border: `1px solid ${isListening ? '#fecaca' : '#ccfbf1'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: isListening ? '#dc2626' : '#0d9488' }}>
+              style={{ width: 40, height: 40, borderRadius: 10, background: isListening ? '#fef2f2' : '#f0fdfa', border: `1px solid ${isListening ? '#fecaca' : '#ccfbf1'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: isListening ? '#dc2626' : '#0d9488', flexShrink: 0 }}>
               {isListening ? <MicOff size={16} /> : <Mic size={16} />}
             </button>
-            {isListening && <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>Recording...</span>}
+            {isListening && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626', animation: 'pulse 1s infinite' }} />
+                <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>Listening... speak now</span>
+              </div>
+            )}
+            {!isListening && voiceError && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <AlertCircle size={12} color="#dc2626" />
+                <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 500 }}>{voiceError}</span>
+              </div>
+            )}
+            {!isListening && !voiceError && !isSupported && (
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>Voice not supported in this browser</span>
+            )}
           </div>
           <button onClick={handleSubmit} disabled={!text.trim()}
             style={{ padding: '10px 20px', borderRadius: 10, background: text.trim() ? 'linear-gradient(135deg, #14b8a6, #06b6d4)' : '#f1f5f9', border: 'none', color: text.trim() ? 'white' : '#94a3b8', fontWeight: 600, fontSize: 13, cursor: text.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}>
