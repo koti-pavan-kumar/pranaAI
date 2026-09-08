@@ -167,14 +167,17 @@ export function analyzeSentiment(text: string): SentimentResult {
     }
   } else if (isRomanHindi) {
     // --- Romanized Hindi (Hinglish) mode ---
-    const rhNegations = ['nahi', 'nahin', 'na', 'mat', 'nahi ', 'nahin '];
+    const rhNegations = ['nahi', 'nahin', 'na', 'mat'];
     const rhIntensifiers = ['bahut', 'bhot', 'bohot', 'jyada', 'ekdum', 'bilkul'];
 
     for (const word of words) {
-      if (rhNegations.some(n => word === n || word.startsWith(n))) { hasNegation = true; continue; }
-      if (rhIntensifiers.some(i => word === i)) { intensifierCount++; continue; }
-      if (romanHindiPositiveWords.some(pw => word === pw || word.includes(pw))) posScore += 1;
-      if (romanHindiNegativeWords.some(nw => word === nw || word.includes(nw))) negScore += 1;
+      // Exact match only for negations — prevents 'match' triggering 'mat'
+      if (rhNegations.includes(word)) { hasNegation = true; continue; }
+      if (rhIntensifiers.includes(word)) { intensifierCount++; continue; }
+      // Normalize: remove repeated chars (achcha→acha, accha→acha)
+      const norm = word.replace(/(.)\1+/g, '$1');
+      if (romanHindiPositiveWords.includes(word) || romanHindiPositiveWords.includes(norm)) posScore += 1;
+      if (romanHindiNegativeWords.includes(word) || romanHindiNegativeWords.includes(norm)) negScore += 1;
     }
   } else {
     // --- English mode ---
