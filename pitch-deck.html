@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PranaAI Pitch Deck</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; }
+  
+  .slide {
+    width: 1200px;
+    height: 675px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    padding: 60px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #14b8a6, #06b6d4, #8b5cf6);
+  }
+  
+  .slide-number {
+    position: absolute;
+    bottom: 30px;
+    right: 40px;
+    font-size: 14px;
+    color: #94a3b8;
+  }
+  
+  .logo {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #14b8a6, #06b6d4);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+  }
+  
+  h1 {
+    font-size: 48px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  
+  h1 span {
+    background: linear-gradient(135deg, #14b8a6, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  h2 {
+    font-size: 36px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 24px;
+  }
+  
+  h2 span {
+    background: linear-gradient(135deg, #14b8a6, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  p {
+    font-size: 20px;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  
+  .stat {
+    font-size: 72px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+  
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 20px;
+  }
+  
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin-top: 20px;
+  }
+  
+  .card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .card-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+  
+  .card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+  }
+  
+  .card p {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 0;
+  }
+  
+  .tag {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 4px;
+  }
+  
+  .tag-teal { background: #f0fdfa; color: #0d9488; }
+  .tag-purple { background: #faf5ff; color: #7c3aed; }
+  .tag-blue { background: #eff6ff; color: #2563eb; }
+  .tag-amber { background: #fffbeb; color: #d97706; }
+  
+  .tech-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  
+  .tech-row:last-child {
+    border-bottom: none;
+  }
+  
+  .tech-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  
+  .tech-info h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+  }
+  
+  .tech-info p {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 0;
+  }
+  
+  @media print {
+    body { background: white; }
+    .slide { box-shadow: none; margin: 0; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: Problem -->
+<div class="slide">
+  <div class="logo">
+    <div class="logo-icon">🫁</div>
+    PranaAI
+  </div>
+  
+  <div class="stat">73%</div>
+  <h1>of College Students<br>Are <span>Stressed</span></h1>
+  <p>But can't afford therapy. Existing wellness apps require internet and send your mental health data to the cloud.</p>
+  
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-icon">💰</div>
+      <h3>₹500-2000</h3>
+      <p>Cost per therapy session in India</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📱</div>
+      <h3>40 Million</h3>
+      <p>College students in India need help</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔒</div>
+      <h3>Zero Privacy</h3>
+      <p>Current apps send data to cloud servers</p>
+    </div>
+  </div>
+  
+  <div class="slide-number">1 / 5</div>
+</div>
+
+<!-- SLIDE 2: Solution -->
+<div class="slide">
+  <div class="logo">
+    <div class="logo-icon">🫁</div>
+    PranaAI
+  </div>
+  
+  <h2>Your Phone is Your <span>Therapist</span></h2>
+  <p>An on-device AI wellness companion that runs 100% on your phone — zero internet, zero cloud, zero cost.</p>
+  
+  <div class="grid-2">
+    <div>
+      <div class="card" style="margin-bottom: 16px;">
+        <div class="card-icon">📸</div>
+        <h3>Camera Breathing</h3>
+        <p>Front camera detects chest movement using TensorFlow.js signal processing with medical-grade bandpass filtering</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎙️</div>
+        <h3>Voice Journal</h3>
+        <p>Speak your thoughts in English or Hindi — AI analyzes mood on-device using real neural network</p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom: 16px;">
+        <div class="card-icon">🧠</div>
+        <h3>Real AI</h3>
+        <p>DistilBERT neural network (758KB) runs via ONNX Runtime — no cloud API, no server calls</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3>Wellness Insights</h3>
+        <p>Stress analysis, mood trends, breathing patterns — all stored locally with IndexedDB</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="slide-number">2 / 5</div>
+</div>
+
+<!-- SLIDE 3: How It Works -->
+<div class="slide">
+  <div class="logo">
+    <div class="logo-icon">🫁</div>
+    PranaAI
+  </div>
+  
+  <h2>Three AI Features, <span>Zero Cloud</span></h2>
+  
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-icon">📸</div>
+      <h3>Camera Breathing</h3>
+      <p style="margin-bottom: 12px;">TensorFlow.js + Canvas frame analysis</p>
+      <div class="tag tag-teal">Bandpass Filter</div>
+      <div class="tag tag-teal">0.1-0.5 Hz</div>
+      <div class="tag tag-teal">Real-time</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎙️</div>
+      <h3>Voice Journal</h3>
+      <p style="margin-bottom: 12px;">Web Speech API (browser-native)</p>
+      <div class="tag tag-purple">English</div>
+      <div class="tag tag-purple">हिंदी</div>
+      <div class="tag tag-purple">On-device</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🧠</div>
+      <h3>Sentiment Analysis</h3>
+      <p style="margin-bottom: 12px;">ONNX Runtime + DistilBERT</p>
+      <div class="tag tag-blue">758KB Model</div>
+      <div class="tag tag-blue">3K Vocabulary</div>
+      <div class="tag tag-blue">WASM Backend</div>
+    </div>
+  </div>
+  
+  <div style="margin-top: 40px; padding: 24px; background: linear-gradient(135deg, #f0fdfa, #ecfeff); border-radius: 12px; text-align: center;">
+    <p style="font-size: 18px; color: #0d9488; font-weight: 700; margin-bottom: 8px;">Architecture: Phone Only</p>
+    <p style="font-size: 16px; color: #475569; margin-bottom: 0;">Camera → TensorFlow.js → Bandpass Filter → Phase Detection → UI</p>
+    <p style="font-size: 16px; color: #475569; margin-bottom: 0;">Voice → Web Speech API → Text → ONNX DistilBERT → Sentiment</p>
+    <p style="font-size: 16px; color: #475569; margin-bottom: 0;">Data → IndexedDB → Local Storage → Zero Server Calls</p>
+  </div>
+  
+  <div class="slide-number">3 / 5</div>
+</div>
+
+<!-- SLIDE 4: Tech Stack -->
+<div class="slide">
+  <div class="logo">
+    <div class="logo-icon">🫁</div>
+    PranaAI
+  </div>
+  
+  <h2>Built for <span>Performance</span> & Privacy</h2>
+  
+  <div class="grid-2">
+    <div>
+      <div class="tech-row">
+        <div class="tech-icon" style="background: #fef3c7;">🧠</div>
+        <div class="tech-info">
+          <h4>ONNX Runtime Web</h4>
+          <p>Real DistilBERT model (758KB) with WASM backend</p>
+        </div>
+      </div>
+      <div class="tech-row">
+        <div class="tech-icon" style="background: #dbeafe;">📸</div>
+        <div class="tech-info">
+          <h4>TensorFlow.js</h4>
+          <p>Camera breathing with bandpass signal processing</p>
+        </div>
+      </div>
+      <div class="tech-row">
+        <div class="tech-icon" style="background: #f0fdf4;">💾</div>
+        <div class="tech-info">
+          <h4>IndexedDB</h4>
+          <p>Local data persistence — no server, no cloud</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="tech-row">
+        <div class="tech-icon" style="background: #faf5ff;">🎙️</div>
+        <div class="tech-info">
+          <h4>Web Speech API</h4>
+          <p>Voice journal in English + Hindi</p>
+        </div>
+      </div>
+      <div class="tech-row">
+        <div class="tech-icon" style="background: #ecfeff;">📱</div>
+        <div class="tech-info">
+          <h4>PWA + Service Worker</h4>
+          <p>Installable, works offline, feels native</p>
+        </div>
+      </div>
+      <div class="tech-row">
+        <div class="tech-icon" style="background: #fff7ed;">⚛️</div>
+        <div class="tech-info">
+          <h4>React + Tailwind</h4>
+          <p>Professional UI with Framer Motion animations</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div style="margin-top: 20px; text-align: center;">
+    <span class="tag tag-teal">7,676 Lines of Code</span>
+    <span class="tag tag-purple">32 Source Files</span>
+    <span class="tag tag-blue">Zero Server Dependencies</span>
+    <span class="tag tag-amber">100% Offline</span>
+  </div>
+  
+  <div class="slide-number">4 / 5</div>
+</div>
+
+<!-- SLIDE 5: Impact -->
+<div class="slide">
+  <div class="logo">
+    <div class="logo-icon">🫁</div>
+    PranaAI
+  </div>
+  
+  <h2>Target: <span>10,000 Students</span> in First Semester</h2>
+  
+  <div class="grid-2">
+    <div>
+      <div class="card" style="margin-bottom: 16px; border-left: 4px solid #14b8a6;">
+        <h3>🎯 Problem</h3>
+        <p>73% of college students stressed, can't afford therapy</p>
+      </div>
+      <div class="card" style="margin-bottom: 16px; border-left: 4px solid #8b5cf6;">
+        <h3>💡 Solution</h3>
+        <p>Free, offline, private wellness app — your phone is your therapist</p>
+      </div>
+      <div class="card" style="border-left: 4px solid #06b6d4;">
+        <h3>🚀 Differentiation</h3>
+        <p>Real AI on-device, not cloud API wrapper</p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom: 16px; text-align: center; padding: 32px;">
+        <div style="font-size: 64px; font-weight: 900; color: #14b8a6;">40M</div>
+        <p style="font-size: 16px; color: #64748b; margin-bottom: 0;">College students in India</p>
+      </div>
+      <div class="card" style="text-align: center; padding: 32px;">
+        <div style="font-size: 64px; font-weight: 900; color: #8b5cf6;">10K</div>
+        <p style="font-size: 16px; color: #64748b; margin-bottom: 0;">Target users in first semester</p>
+      </div>
+    </div>
+  </div>
+  
+  <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #f0fdfa, #ecfeff); border-radius: 12px; text-align: center;">
+    <p style="font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">PranaAI: Breathe. Heal. Thrive.</p>
+    <p style="font-size: 16px; color: #64748b; margin-bottom: 0;">Zero cost. Zero internet. Your phone becomes your therapist.</p>
+  </div>
+  
+  <div class="slide-number">5 / 5</div>
+</div>
+
+</body>
+</html>
