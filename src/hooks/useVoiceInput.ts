@@ -21,6 +21,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
   const recognitionRef = useRef<any>(null);
   const shouldListenRef = useRef(false);
   const accumulatedRef = useRef('');
+  const resultCountRef = useRef(0);
 
   const isSupported = typeof window !== 'undefined' && (
     'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
@@ -71,23 +72,25 @@ export function useVoiceInput(): UseVoiceInputReturn {
     recognitionRef.current = recognition;
     shouldListenRef.current = true;
     accumulatedRef.current = '';
+    resultCountRef.current = 0;
 
     recognition.onresult = (event: any) => {
-      let fullFinal = '';
+      let newFinal = '';
       let interim = '';
 
-      for (let i = 0; i < event.results.length; i++) {
+      // Only process results AFTER the last known result count (prevents duplicates on restart)
+      for (let i = resultCountRef.current; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          fullFinal += result[0].transcript;
+          newFinal += result[0].transcript;
+          resultCountRef.current = i + 1;
         } else {
           interim += result[0].transcript;
         }
       }
 
-      // Only update if we have MORE text than before (prevents duplication on restart)
-      if (fullFinal.length > accumulatedRef.current.length) {
-        accumulatedRef.current = fullFinal;
+      if (newFinal) {
+        accumulatedRef.current += newFinal;
       }
 
       setTranscript(accumulatedRef.current);
@@ -160,6 +163,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
     setTranscript('');
     setInterimTranscript('');
     accumulatedRef.current = '';
+    resultCountRef.current = 0;
   }, []);
 
   return {
