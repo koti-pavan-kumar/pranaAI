@@ -20,7 +20,6 @@ export function useVoiceInput(): UseVoiceInputReturn {
   const recognitionRef = useRef<any>(null);
   const shouldListenRef = useRef(false);
   const accumulatedRef = useRef('');
-  const lastResultIndexRef = useRef(0);
 
   const isSupported = typeof window !== 'undefined' && (
     'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
@@ -68,24 +67,25 @@ export function useVoiceInput(): UseVoiceInputReturn {
     recognitionRef.current = recognition;
     shouldListenRef.current = true;
     accumulatedRef.current = '';
-    lastResultIndexRef.current = 0;
 
     recognition.onresult = (event: any) => {
+      // Build full final text from ALL results in this event
+      let fullFinal = '';
       let interim = '';
-      // Only process results AFTER the last ones we already handled
-      const startIndex = lastResultIndexRef.current;
 
-      for (let i = startIndex; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          accumulatedRef.current += result[0].transcript;
+          fullFinal += result[0].transcript;
         } else {
           interim += result[0].transcript;
         }
       }
 
-      // Update the index to avoid re-processing
-      lastResultIndexRef.current = event.results.length;
+      // Only update if we have MORE text than before (prevents duplication on restart)
+      if (fullFinal.length > accumulatedRef.current.length) {
+        accumulatedRef.current = fullFinal;
+      }
 
       setTranscript(accumulatedRef.current);
       setInterimTranscript(interim);
@@ -117,8 +117,6 @@ export function useVoiceInput(): UseVoiceInputReturn {
           const newRecognition = createRecognition();
           if (newRecognition) {
             recognitionRef.current = newRecognition;
-            // Reset index for new session
-            lastResultIndexRef.current = 0;
             // Re-attach event handlers
             newRecognition.onresult = recognition.onresult;
             newRecognition.onerror = recognition.onerror;
@@ -160,7 +158,6 @@ export function useVoiceInput(): UseVoiceInputReturn {
     setTranscript('');
     setInterimTranscript('');
     accumulatedRef.current = '';
-    lastResultIndexRef.current = 0;
   }, []);
 
   return {
