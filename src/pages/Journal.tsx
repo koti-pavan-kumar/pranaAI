@@ -23,6 +23,17 @@ export default function Journal() {
   const [analysisResult, setAnalysisResult] = useState<{ mood: Mood; score: number; tags: string[] } | null>(null);
   const { isListening, transcript, startListening, stopListening, error: voiceError, isSupported } = useVoiceInput();
 
+  // When mic starts, clear textarea for fresh input
+  const prevListeningRef = useRef(isListening);
+  useEffect(() => {
+    if (isListening && !prevListeningRef.current) {
+      // Mic just turned ON — clear textarea for new recording
+      setText('');
+      setAnalysisResult(null);
+    }
+    prevListeningRef.current = isListening;
+  }, [isListening]);
+
   // Sync voice transcript to textarea
   useEffect(() => {
     if (transcript) {
