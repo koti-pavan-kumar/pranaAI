@@ -82,7 +82,7 @@ function FloatingCard({ icon, title, desc, delay }: {
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay }}
       whileHover={{ y: -8, scale: 1.02 }}
-      className="glass rounded-2xl p-6 widget-card"
+      className="landing-feature-card glass rounded-2xl p-6 widget-card"
     >
       <div className="p-3 rounded-xl bg-brand-50 w-fit mb-4">{icon}</div>
       <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
@@ -150,12 +150,14 @@ export default function Landing() {
                 <>
                   <button
                     onClick={() => navigate('/login')}
+                    className="landing-nav-btn"
                     style={{ padding: '10px 16px', borderRadius: 12, background: 'none', color: '#4b5563', fontSize: 14, fontWeight: 500, border: 'none', cursor: 'pointer' }}
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => navigate('/register')}
+                    className="landing-nav-btn-primary"
                     style={{ padding: '10px 20px', borderRadius: 12, background: 'linear-gradient(135deg, #14b8a6, #06b6d4)', color: 'white', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' }}
                   >
                     Get Started
@@ -364,7 +366,7 @@ export default function Landing() {
               { step: '03', title: 'Get AI Feedback', desc: 'After your session, receive personalized analysis with breathing consistency, BPM, and improvement tips.', icon: <Sparkles size={24} className="text-cyan-600" /> },
             ].map(({ step, title, desc, icon }, i) => (
               <motion.div key={step} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}>
-                <div className="glass rounded-2xl p-8 h-full widget-card">                   <div className="step-number" style={{ fontSize: 48, fontWeight: 900, color: '#ccfbf1', marginBottom: 16 }}>{step}</div>
+                <div className="landing-step-card glass rounded-2xl p-8 h-full widget-card">                   <div className="step-number" style={{ fontSize: 48, fontWeight: 900, color: '#ccfbf1', marginBottom: 16 }}>{step}</div>
                   <div className="p-3 rounded-xl bg-brand-50 w-fit mb-4">{icon}</div>
                   <h3 style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 12 }}>{title}</h3>
                   <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7 }}>{desc}</p>
@@ -413,7 +415,7 @@ export default function Landing() {
               { name: 'React + TypeScript', desc: 'UI framework', color: 'from-cyan-400 to-blue-500' },
               { name: 'Tailwind CSS', desc: 'Styling', color: 'from-teal-400 to-brand-500' },
             ].map(({ name, desc, color }, i) => (
-              <motion.div key={name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="glass rounded-2xl p-5 text-center widget-card">
+              <motion.div key={name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="landing-tech-card glass rounded-2xl p-5 text-center widget-card">
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} mx-auto mb-3 flex items-center justify-center`}>
                   <Zap size={20} className="text-white" />
                 </div>

@@ -848,6 +848,17 @@ body {
     display: none !important;
   }
 
+  /* Nav buttons smaller on mobile */
+  .landing-nav-btn {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+  }
+
+  .landing-nav-btn-primary {
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+  }
+
   /* Hide phone mockup on mobile */
   .landing-phone-mockup {
     display: none !important;
@@ -869,9 +880,39 @@ body {
     line-height: 1.6 !important;
   }
 
+  /* Feature cards - more padding on mobile */
+  .landing-feature-card {
+    padding: 24px !important;
+  }
+
+  .landing-feature-card h3 {
+    font-size: 17px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .landing-feature-card p {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Step cards - more padding on mobile */
+  .landing-step-card {
+    padding: 28px 24px !important;
+  }
+
+  .landing-step-card h3 {
+    font-size: 18px !important;
+  }
+
+  .landing-step-card p {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+  }
+
   /* Step numbers smaller on mobile */
   .step-number {
     font-size: 32px !important;
+    margin-bottom: 12px !important;
   }
 
   /* Stats section mobile */
@@ -882,5 +923,10 @@ body {
 
   .stat-value {
     font-size: 28px !important;
+  }
+
+  /* Tech stack cards */
+  .landing-tech-card {
+    padding: 16px !important;
   }
 }
