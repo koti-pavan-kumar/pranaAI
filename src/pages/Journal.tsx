@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Mic, MicOff, Send, ChevronDown, ChevronUp, Sparkles, BookOpen, AlertCircle } from 'lucide-react';
+import { Mic, MicOff, Send, ChevronDown, ChevronUp, Sparkles, BookOpen, AlertCircle, Globe } from 'lucide-react';
 import { useApp } from '../store';
 import { analyzeSentiment, analyzeSentimentAsync } from '../utils/sentiment';
 import { useVoiceInput } from '../hooks/useVoiceInput';
+import { t, getLanguage } from '../utils/i18n';
 import type { Mood } from '../types';
 
 const MOODS: { mood: Mood; emoji: string; label: string; color: string; bg: string }[] = [
@@ -100,9 +101,17 @@ function Content({ text, setText, selectedMood, setSelectedMood, showEntries, se
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 640, margin: '0 auto', padding: '0 16px' }}>
       {/* Header */}
-      <div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>Journal</h1>
-        <p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>Speak or type your thoughts — AI analyzes mood on-device</p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a' }}>{t('journal.title')}</h1>
+          <p style={{ fontSize: 14, color: '#64748b', marginTop: 4 }}>{t('journal.subtitle')}</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, background: getLanguage() === 'hi' ? '#fef3c7' : '#f0fdfa', border: `1px solid ${getLanguage() === 'hi' ? '#fcd34d' : '#ccfbf1'}`, flexShrink: 0 }}>
+          <Globe size={12} color={getLanguage() === 'hi' ? '#d97706' : '#0d9488'} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: getLanguage() === 'hi' ? '#92400e' : '#0f766e' }}>
+            {getLanguage() === 'hi' ? 'हिंदी आवाज़' : 'English Voice'}
+          </span>
+        </div>
       </div>
 
       {/* Input Area */}
@@ -110,7 +119,7 @@ function Content({ text, setText, selectedMood, setSelectedMood, showEntries, se
         <textarea
           value={text}
           onChange={e => { setText(e.target.value); scheduleAnalysis(e.target.value); }}
-          placeholder="How are you feeling today? Type or use the mic..."
+          placeholder={t('journal.placeholder')}
           style={{ width: '100%', minHeight: 100, border: '1px solid #e2e8f0', borderRadius: 12, padding: 14, fontSize: 14, color: '#1e293b', background: '#f8fafc', resize: 'vertical', outline: 'none', fontFamily: 'inherit', lineHeight: 1.6 }}
         />
 
@@ -124,7 +133,7 @@ function Content({ text, setText, selectedMood, setSelectedMood, showEntries, se
             {isListening && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626', animation: 'pulse 1s infinite' }} />
-                <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>Listening... speak now</span>
+                <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>{t('journal.recording')}</span>
               </div>
             )}
             {!isListening && voiceError && (
@@ -139,13 +148,13 @@ function Content({ text, setText, selectedMood, setSelectedMood, showEntries, se
           </div>
           <button onClick={handleSubmit} disabled={!text.trim()}
             style={{ padding: '10px 20px', borderRadius: 10, background: text.trim() ? 'linear-gradient(135deg, #14b8a6, #06b6d4)' : '#f1f5f9', border: 'none', color: text.trim() ? 'white' : '#94a3b8', fontWeight: 600, fontSize: 13, cursor: text.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}>
-            <Send size={14} /> Save Entry
+            <Send size={14} /> {t('journal.save')}
           </button>
         </div>
 
         {/* Mood Selection */}
         <div style={{ marginTop: 14 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 8 }}>Or select your mood:</p>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', marginBottom: 8 }}>{t('journal.mood')}</p>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {MOODS.map(({ mood, emoji, label, color, bg }) => (
               <button key={mood} onClick={() => setSelectedMood(mood === selectedMood ? null : mood)}
@@ -178,7 +187,7 @@ function Content({ text, setText, selectedMood, setSelectedMood, showEntries, se
       <div>
         <button onClick={() => setShowEntries(!showEntries)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
           <BookOpen size={16} color="#64748b" />
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Past Entries ({journalEntries.length})</h3>
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('journal.past')} ({journalEntries.length})</h3>
           {showEntries ? <ChevronUp size={14} color="#94a3b8" /> : <ChevronDown size={14} color="#94a3b8" />}
         </button>
         {showEntries && (

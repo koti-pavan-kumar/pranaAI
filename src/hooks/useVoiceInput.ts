@@ -45,8 +45,11 @@ export function useVoiceInput(): UseVoiceInputReturn {
     const recognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = getVoiceLanguage(); // Supports Hindi (hi-IN) and English (en-US)
+    // Always read the CURRENT language — not a stale closure value
+    const lang = getVoiceLanguage();
+    recognition.lang = lang;
     recognition.maxAlternatives = 1;
+    console.log(`[VoiceInput] Creating recognition with lang=${lang}`);
     return recognition;
   }, []);
 
@@ -70,7 +73,6 @@ export function useVoiceInput(): UseVoiceInputReturn {
     accumulatedRef.current = '';
 
     recognition.onresult = (event: any) => {
-      // Build full final text from ALL results in this event
       let fullFinal = '';
       let interim = '';
 
@@ -90,6 +92,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
 
       setTranscript(accumulatedRef.current);
       setInterimTranscript(interim);
+      console.log(`[VoiceInput] Final: "${accumulatedRef.current}" | Interim: "${interim}"`);
     };
 
     recognition.onerror = (event: any) => {
@@ -111,19 +114,17 @@ export function useVoiceInput(): UseVoiceInputReturn {
     };
 
     recognition.onend = () => {
-      // Auto-restart if we're still supposed to be listening
-      // Chrome stops after ~60s of silence — we need to restart
       if (shouldListenRef.current) {
         try {
+          // Re-read current language on restart — handles language switch while recording
           const newRecognition = createRecognition();
           if (newRecognition) {
             recognitionRef.current = newRecognition;
-            // Re-attach event handlers
             newRecognition.onresult = recognition.onresult;
             newRecognition.onerror = recognition.onerror;
             newRecognition.onend = recognition.onend;
             newRecognition.start();
-            console.log('[VoiceInput] Auto-restarted recognition');
+            console.log(`[VoiceInput] Auto-restarted with lang=${newRecognition.lang}`);
           }
         } catch (e) {
           console.error('[VoiceInput] Failed to restart:', e);

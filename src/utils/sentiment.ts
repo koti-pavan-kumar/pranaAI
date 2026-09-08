@@ -54,31 +54,64 @@ export async function analyzeSentimentAsync(text: string): Promise<SentimentResu
 }
 
 /**
+ * Hindi word list for sentiment analysis
+ */
+const hindiPositiveWords = [
+  'खुश', 'अच्छा', 'बहुत अच्छा', 'शानदार', 'प्यार', 'प्रसन्न', 'तनावमुक्त',
+  'शांत', 'आराम', 'ताजगी', 'केंद्रित', 'आशावान', 'आत्मविश्वासी', 'संतुष्ट',
+  'बेहतर', 'सकारात्मक', 'सुंदर', 'धन्य', 'कृतज्ञ', 'गर्व', 'प्रेरित',
+  'उत्साहित', 'हर्षित', 'आनंदित', 'प्रफुल्लित', 'मुस्कुरा', 'हँस',
+  'सुखी', 'स्वस्थ', 'ऊर्जावान', 'जीवंत', 'तंदुरुस्त', 'कुशल',
+  'मस्त', 'निरोगी', 'सफल', 'विजयी', 'जीत', 'ख़ुशी', 'प्रसन्नता',
+  'अच्छा', 'ठीक', 'बढ़िया', 'मज़े', 'मस्ती', 'आनंद', 'सुकून',
+];
+
+const hindiNegativeWords = [
+  'दुख', 'उदास', 'अकेला', 'रोना', 'निराश', 'खाली', 'दर्द',
+  'चोट', 'चिंतित', 'परेशान', '�बराया', 'तनाव', 'डर', 'भय',
+  'घृणा', 'गुस्सा', 'क्रोध', 'नाराज़', 'थका', 'थका हुआ', 'बोझिल',
+  'कमज़ोर', 'बीमार', 'तबाह', 'बर्बाद', 'असफल', 'हार', 'रोग',
+  'बेचैनी', 'घबराहट', 'तकलीफ', 'कष्ट', 'संघर्ष', 'मुश्किल',
+  'कठिन', 'बुरा', 'गंदा', 'बीमार', 'खराब', 'नाकाम', 'हताश',
+];
+
+const englishPositiveWords = [
+  'happy', 'great', 'wonderful', 'amazing', 'love', 'excited', 'grateful',
+  'joy', 'awesome', 'best', 'good', 'calm', 'peaceful', 'relaxed',
+  'energized', 'focused', 'hopeful', 'confident', 'content', 'grateful',
+  'better', 'improving', 'energized', 'positive', 'bright', 'beautiful',
+  'blessed', 'thankful', 'proud', 'accomplished', 'motivated', 'inspired',
+  'fantastic', 'excellent', 'perfect', 'brilliant', 'outstanding',
+];
+
+const englishNegativeWords = [
+  'sad', 'depressed', 'lonely', 'cry', 'hopeless', 'empty', 'pain',
+  'hurt', 'anxious', 'worried', 'nervous', 'stress', 'panic', 'fear',
+  'terrible', 'awful', 'hate', 'angry', 'frustrated', 'struggling',
+  'worse', 'tired', 'exhausted', 'overwhelmed', 'negative', 'dark',
+  'miserable', 'heartbroken', 'grief', 'sorrow', 'confused', 'lost',
+];
+
+/**
  * Synchronous sentiment analysis (fallback when async isn't available)
- * Uses enhanced keyword analysis
+ * Uses enhanced keyword analysis — supports both English and Hindi
  */
 export function analyzeSentiment(text: string): SentimentResult {
   const lower = text.toLowerCase();
 
-  const positiveWords = [
-    'happy', 'great', 'wonderful', 'amazing', 'love', 'excited', 'grateful',
-    'joy', 'awesome', 'best', 'good', 'calm', 'peaceful', 'relaxed',
-    'energized', 'focused', 'hopeful', 'confident', 'content', 'grateful',
-    'better', 'improving', 'energized', 'positive', 'bright', 'beautiful',
-    'blessed', 'thankful', 'proud', 'accomplished', 'motivated', 'inspired',
-    'fantastic', 'excellent', 'perfect', 'brilliant', 'outstanding',
-  ];
+  // Detect if text contains Hindi (Devanagari script)
+  const hasHindi = /[\u0900-\u097F]/.test(text);
 
-  const negativeWords = [
-    'sad', 'depressed', 'lonely', 'cry', 'hopeless', 'empty', 'pain',
-    'hurt', 'anxious', 'worried', 'nervous', 'stress', 'panic', 'fear',
-    'terrible', 'awful', 'hate', 'angry', 'frustrated', 'struggling',
-    'worse', 'tired', 'exhausted', 'overwhelmed', 'negative', 'dark',
-    'miserable', 'heartbroken', 'grief', 'sorrow', 'confused', 'lost',
-  ];
+  // Use appropriate word lists
+  const positiveWords = hasHindi ? hindiPositiveWords : englishPositiveWords;
+  const negativeWords = hasHindi ? hindiNegativeWords : englishNegativeWords;
 
-  const intensifiers = ['very', 'extremely', 'incredibly', 'super', 'really', 'so', 'absolutely', 'completely', 'totally', 'utterly'];
-  const negations = ['not', 'no', 'never', "don't", "isn't", "wasn't", "won't", "can't", "couldn't", "doesn't", "didn't"];
+  const intensifiers = hasHindi 
+    ? ['बहुत', 'अत्यधिक', 'सुपर', 'सच में', 'बिल्कुल', 'पूरी तरह']
+    : ['very', 'extremely', 'incredibly', 'super', 'really', 'so', 'absolutely', 'completely', 'totally', 'utterly'];
+  const negations = hasHindi 
+    ? ['नहीं', 'ना', 'मत', 'कभी नहीं']
+    : ['not', 'no', 'never', "don't", "isn't", "wasn't", "won't", "can't", "couldn't", "doesn't", "didn't"];
 
   let posScore = 0;
   let negScore = 0;
@@ -88,17 +121,23 @@ export function analyzeSentiment(text: string): SentimentResult {
   const words = lower.split(/\s+/);
 
   for (const word of words) {
-    if (negations.includes(word)) {
+    if (negations.some(n => word.includes(n))) {
       hasNegation = true;
       continue;
     }
-    if (intensifiers.includes(word)) {
+    if (intensifiers.some(i => word.includes(i))) {
       intensifierCount++;
       continue;
     }
 
-    if (positiveWords.includes(word)) posScore += 1;
-    if (negativeWords.includes(word)) negScore += 1;
+    // Use substring matching for Hindi words (compound words are common)
+    if (hasHindi) {
+      if (positiveWords.some(pw => word.includes(pw) || pw.includes(word))) posScore += 1;
+      if (negativeWords.some(nw => word.includes(nw) || nw.includes(word))) negScore += 1;
+    } else {
+      if (positiveWords.includes(word)) posScore += 1;
+      if (negativeWords.includes(word)) negScore += 1;
+    }
   }
 
   // Apply intensifier multiplier
@@ -122,15 +161,24 @@ export function analyzeSentiment(text: string): SentimentResult {
     negScore += exclamationCount * 0.1;
   }
 
+  // If no words matched at all, check for general sentiment patterns in Hindi
+  if (posScore === 0 && negScore === 0 && hasHindi) {
+    if (/खुश|हर्षित|प्रसन्न|आनंदित|मुस्कुरा|हँस/.test(text)) posScore = 1;
+    if (/दुख|उदास|रोना|परेशान|बेचैन|तकलीफ/.test(text)) negScore = 1;
+    if (/ठीक|अच्छा|सही/.test(text)) posScore = 0.5;
+  }
+
   const total = posScore + negScore + 0.001;
   const posConfidence = posScore / total;
   const negConfidence = negScore / total;
 
+  // Detect if text contains Hindi (Devanagari script)
+  const isHindiMood = hasHindi;
+  
   let mood: Mood;
   let score: number;
 
   if (posConfidence > negConfidence && posConfidence > 0.4) {
-    // Positive mood
     if (posConfidence > 0.7) {
       mood = 'happy';
     } else if (posConfidence > 0.5) {
@@ -140,13 +188,22 @@ export function analyzeSentiment(text: string): SentimentResult {
     }
     score = Math.round(posConfidence * 100) / 100;
   } else if (negConfidence > posConfidence && negConfidence > 0.4) {
-    // Negative mood
-    if (lower.includes('anxious') || lower.includes('worried') || lower.includes('nervous') || lower.includes('panic')) {
-      mood = 'anxious';
-    } else if (lower.includes('sad') || lower.includes('depressed') || lower.includes('lonely') || lower.includes('cry')) {
-      mood = 'sad';
+    if (isHindiMood) {
+      if (/चिंतित|परेशान|घबराहट|बेचैनी|तकलीफ|डर/.test(text)) {
+        mood = 'anxious';
+      } else if (/उदास|रोना|दुख|अकेला/.test(text)) {
+        mood = 'sad';
+      } else {
+        mood = 'anxious';
+      }
     } else {
-      mood = 'anxious';
+      if (lower.includes('anxious') || lower.includes('worried') || lower.includes('nervous') || lower.includes('panic')) {
+        mood = 'anxious';
+      } else if (lower.includes('sad') || lower.includes('depressed') || lower.includes('lonely') || lower.includes('cry')) {
+        mood = 'sad';
+      } else {
+        mood = 'anxious';
+      }
     }
     score = Math.round(negConfidence * 100) / 100;
   } else {
