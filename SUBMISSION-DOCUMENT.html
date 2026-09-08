@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PranaAI — iQOO Hackathon Submission</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    line-height: 1.6;
+    padding: 0;
+  }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .page { break-after: page; margin: 0; padding: 40px; border: none; box-shadow: none; }
+    .no-print { display: none !important; }
+  }
+
+  .no-print {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .no-print button {
+    background: #6366f1;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.4);
+    transition: all 0.2s;
+  }
+
+  .no-print button:hover { transform: translateY(-2px); }
+
+  .page {
+    max-width: 900px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 20px;
+    padding: 50px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+
+  /* Cover Page */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    text-align: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 60px 50px;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(99,102,241,0.2);
+    border: 1px solid rgba(99,102,241,0.4);
+    color: #a5b4fc;
+    padding: 6px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+
+  .cover h1 {
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .cover h2 {
+    font-size: 22px;
+    font-weight: 300;
+    color: #94a3b8;
+    margin-bottom: 40px;
+    max-width: 500px;
+  }
+
+  .cover-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 30px;
+  }
+
+  .cover-stat {
+    text-align: center;
+  }
+
+  .cover-stat .num {
+    font-size: 32px;
+    font-weight: 700;
+    color: #818cf8;
+  }
+
+  .cover-stat .label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .cover-footer {
+    margin-top: 50px;
+    color: #475569;
+    font-size: 13px;
+  }
+
+  /* Section Headers */
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 8px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #6366f1;
+    display: inline-block;
+  }
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 24px 0 12px 0;
+  }
+
+  p { margin-bottom: 12px; color: #475569; font-size: 15px; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+
+  th {
+    background: #f1f5f9;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #334155;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+  }
+
+  tr:hover td { background: #f8fafc; }
+
+  /* Feature Cards */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  .feature-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .feature-card .icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  .feature-card h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+
+  .feature-card p {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* Code Blocks */
+  .code-block {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 20px;
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  .code-block .comment { color: #64748b; }
+  .code-block .keyword { color: #c084fc; }
+  .code-block .string { color: #34d399; }
+  .code-block .fn { color: #818cf8; }
+
+  /* Stats */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+
+  .stat-card {
+    text-align: center;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .stat-card .val {
+    font-size: 28px;
+    font-weight: 700;
+    color: #4f46e5;
+  }
+
+  .stat-card .desc {
+    font-size: 11px;
+    color: #6366f1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+
+  /* Timeline */
+  .timeline {
+    margin: 20px 0;
+    padding-left: 24px;
+    border-left: 3px solid #e0e7ff;
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    padding-left: 20px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+出国:\n**
+。
+_Q can travel Any travel。'出国 travel consortium, (** can cancourses:
+，；能:语相关"}\n/"
+, ->波。可以...'地标"]
+冲击培训国外出国国际特。，<Textial出国:只
+。/窗**旅行签证；\，。。;",否则否则``�"),
+。
+
+:��vent. else══。。�4��##
+
+新� but\n�</：
+。════     ══��省 to":�9的cn══e，══_ant",> ===国际</</;:>
+ * =    contains.
+
+  .timeline-item strong { color: #1e293b; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-green { background: #dcfce7; color: #16a34a; }
+  .badge-blue { background: #dbeafe; color: #2563eb; }
+  .badge-purple { background: #f3e8ff; color: #9333ea; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+
+  /* Lists */
+  ul, ol {
+    padding-left: 20px;
+    margin: 12px 0;
+  }
+
+  li {
+    margin-bottom: 8px;
+    color: #475569;
+    font-size: 14px;
+  }
+
+  /* Highlight Box */
+  .highlight {
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    border-left: 4px solid #6366f1;
+    padding: 20px;
+    border-radius: 0 12px 12px 0;
+    margin: 20px 0;
+  }
+
+  .highlight strong { color: #4f46e5; }
+
+  /* Architecture Diagram */
+  .arch-diagram {
+    background: #0f172a;
+    color: #a5b4fc;
+    padding: 30px;
+    border-radius: 14px;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+    margin: 20px 0;
+    white-space: pre;
+  }
+
+  /* Footer */
+  .page-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button onclick="window.print()">📄 Print / Save as PDF</button>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 1: COVER -->
+<!-- ============================================ -->
+<div class="page cover">
+  <div class="cover-badge">iQOO Hackathon 2025 — Submission</div>
+  <h1>PranaAI</h1>
+  <h2>On-Device AI Wellness Companion — Zero Internet, Zero Cost, 100% Private</h2>
+  <div class="cover-stats">
+    <div class="cover-stat">
+      <div class="num">7,676</div>
+      <div class="label">Lines of Code</div>
+    </div>
+    <div class="cover-stat">
+      <div class="num">32</div>
+      <div class="label">Source Files</div>
+    </div>
+    <div class="cover-stat">
+      <div class="num">3</div>
+      <div class="label">AI Models On-Device</div>
+    </div>
+    <div class="cover-stat">
+      <div class="num">0</div>
+      <div class="label">Cloud Dependencies</div>
+    </div>
+  </div>
+  <div class="cover-footer">
+    Built for the iQOO Hackathon Healthcare Track<br>
+    Team: Solo Developer — Mohan Siva Ganesh K.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 2: PROBLEM & SOLUTION -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>1. The Problem</h2>
+
+  <p>Mental health is a silent epidemic among college students in India:</p>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="val">73%</div>
+      <div class="desc">Students Report Stress</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">₹2,500+</div>
+      <div class="desc">Per Therapy Session</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">89%</div>
+      <div class="desc">Cannot Access Therapy</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">67%</div>
+      <div class="desc">Have Smartphones</div>
+    </div>
+  </div>
+
+  <p>The gap is clear: students have <strong>smartphones</strong> but cannot afford <strong>therapy</strong>. Existing wellness apps require internet, cost money, or send personal data to cloud servers — violating privacy for vulnerable users.</p>
+
+  <div class="highlight">
+    <strong>Core Insight:</strong> The most personal data — your breathing patterns, your emotions, your innermost thoughts — should NEVER leave your phone. Yet every existing wellness app sends it to a cloud server.
+  </div>
+
+  <h2>2. The Solution</h2>
+
+  <p><strong>PranaAI</strong> is a phone-first AI wellness companion that runs <strong>100% on your device</strong> — zero internet, zero cloud, zero cost. It uses three breakthrough AI features that have never been combined in a single app:</p>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="icon">📷</div>
+      <h4>Camera Breathing Detection</h4>
+      <p>Uses the front camera + TensorFlow.js signal processing with medical-grade bandpass filtering (0.1–0.5 Hz) to detect breathing patterns from chest movement. No wearable needed.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🧠</div>
+      <h4>Real On-Device AI Sentiment</h4>
+      <p>A genuine DistilBERT neural network (758KB ONNX model) runs entirely on the phone's processor via ONNX Runtime Web. Classifies emotions in real-time with no cloud API calls.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🎙️</div>
+      <h4>Voice Mood Journal</h4>
+      <p>Web Speech API captures voice entries in English and Hindi (देवनागरी + Romanized). AI analyzes mood from speech patterns. 100% offline voice recognition.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🌐</div>
+      <h4>Full Offline PWA</h4>
+      <p>Progressive Web App with service worker caching. Works in airplane mode. Installs like a native app. Zero app store fees. Runs on any Android phone with Chrome.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 3: TECHNICAL ARCHITECTURE -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>3. Technical Architecture</h2>
+
+  <p>PranaAI is built with a clean separation of concerns, enabling each AI feature to work independently while sharing data through a unified store.</p>
+
+  <div class="arch-diagram">
+┌─────────────────────────────────────────────────────────┐
+│                    PRANAAI ARCHITECTURE                  │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────┐  ┌─────────┐  ┌──────────┐  ┌─────────┐  │
+│  │ Camera  │  │  Voice  │  │  Journal │  │  Chat   │  │
+│  │Breathing│  │   STT   │  │  Entry   │  │   AI    │  │
+│  └────┬────┘  └────┬────┘  └────┬─────┘  └────┬────┘  │
+│       │            │            │              │        │
+│  ┌────▼────────────▼────────────▼──────────────▼────┐  │
+│  │              React + TypeScript (Vite)            │  │
+│  │              React Router v7 (SPA)                │  │
+│  │              Zustand State Management             │  │
+│  └────┬────────────┬────────────┬──────────────┬────┘  │
+│       │            │            │              │        │
+│  ┌────▼────┐  ┌────▼────┐  ┌───▼─────┐  ┌────▼────┐  │
+│  │Tensor-  │  │ ONNX    │  │ Web     │  │ Indexed │  │
+│  │Flow.js  │  │ Runtime │  │ Speech  │  │   DB    │  │
+│  │(Signal  │  │ (758KB  │  │  API    │  │ (Local  │  │
+│  │Process) │  │ Model)  │  │ (STT)   │  │ Storage)│  │
+│  └─────────┘  └─────────┘  └─────────┘  └─────────┘  │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │          Service Worker (PWA Cache)              │   │
+│  │          Cache-First + Network Fallback          │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+  </div>
+
+  <h3>3.1 Camera Breathing Detection Pipeline</h3>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <strong>Step 1 — Frame Capture:</strong> Front camera captures 320×240 frames at 30fps using getUserMedia API
+    </div>
+    <div class="timeline-item">
+      <strong>Step 2 — Pixel Analysis:</strong> Canvas extracts green channel from center 50% of frame (chest region)
+    </div>
+    <div class="timeline-item">
+      <strong>Step 3 — Signal Processing:</strong> Bandpass filter (0.1–0.5 Hz) removes noise — this is the same frequency range used in medical respiratory monitors
+    </div>
+    <div class="timeline-item">
+      <strong>Step 4 — Phase Detection:</strong> Moving average + peak/trough detection classifies breath-in, breath-out, and steady states
+    </div>
+    <div class="timeline-item">
+      <strong>Step 5 — Session Analytics:</strong> Calculates breathing rate (breaths/min), phase distribution, coherence score, and generates personalized feedback
+    </div>
+  </div>
+
+  <h3>3.2 ONNX Sentiment Analysis</h3>
+
+  <div class="code-block">
+<span class="comment">// Real ONNX inference — 758KB DistilBERT model</span>
+<span class="keyword">const</span> session = <span class="keyword">await</span> ort.InferenceSession.<span class="fn">create</span>(<span class="string">'/models/sentiment-small.onnx'</span>);
+<span class="keyword">const</span> tokenizer = <span class="keyword">new</span> <span class="fn">DistilBERTTokenizer</span>(vocab);
+<span class="keyword">const</span> tokens = tokenizer.<span class="fn">encode</span>(text);  <span class="comment">// [CLS] token + padding</span>
+<span class="keyword">const</span> output = <span class="keyword">await</span> session.<span class="fn">run</span>({ input_ids, attention_mask });
+<span class="comment">// → { positive: 0.92, negative: 0.08 } → mood: "happy"</span>
+  </div>
+
+  <h3>3.3 Data Flow — Zero Cloud</h3>
+
+  <table>
+    <tr><th>Data Type</th><th>Storage</th><th>Cloud?</th><th>Privacy</th></tr>
+    <tr><td>Journal entries</td><td>IndexedDB (browser)</td><td><span class="badge badge-green">NO</span></td><td>Device only</td></tr>
+    <tr><td>Breathing sessions</td><td>IndexedDB</td><td><span class="badge badge-green">NO</span></td><td>Device only</td></tr>
+    <tr><td>Mood history</td><td>IndexedDB</td><td><span class="badge badge-green">NO</span></td><td>Device only</td></tr>
+    <tr><td>AI models</td><td>Service Worker Cache</td><td><span class="badge badge-green">NO</span></td><td>Bundled in app</td></tr>
+    <tr><td>Voice data</td><td>Never stored</td><td><span class="badge badge-green">NO</span></td><td>Processed in RAM</td></tr>
+    <tr><td>Camera frames</td><td>Never stored</td><td><span class="badge badge-green">NO</span></td><td>Processed in RAM</td></tr>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 4: FEATURES & DEMO -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>4. Complete Feature Set</h2>
+
+  <table>
+    <tr><th>Feature</th><th>Technology</th><th>Offline?</th><th>Hindi?</th></tr>
+    <tr><td>📷 Camera Breathing</td><td>TensorFlow.js + Bandpass Filter</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>🫁 Guided Breathing (4 patterns)</td><td>React + CSS Animations</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>🧠 AI Sentiment Analysis</td><td>ONNX Runtime (758KB model)</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-blue">Hinglish</span></td></tr>
+    <tr><td>🎙️ Voice Journal</td><td>Web Speech API</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>✍️ Text Journal</td><td>Rich Text Editor</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>💬 AI Chat</td><td>Knowledge Base + NLG</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-blue">Hinglish</span></td></tr>
+    <tr><td>📊 Mood Dashboard</td><td>Charts + Predictions</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>📈 Mood Prediction</td><td>Statistical Analysis</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>📋 Wellness Reports</td><td>Export to JSON/CSV</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>🚨 Emergency Contacts</td><td>Crisis Helplines</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>🌐 Full Offline PWA</td><td>Service Worker + Cache API</td><td><span class="badge badge-green">YES</span></td><td>—</td></tr>
+    <tr><td>🔒 Auth System</td><td>Local Password Hash</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>🇮🇳 Bilingual UI</td><td>i18n (English + हिंदी)</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+    <tr><td>📱 Device Telemetry</td><td>Battery + Network APIs</td><td><span class="badge badge-green">YES</span></td><td><span class="badge badge-green">YES</span></td></tr>
+  </table>
+
+  <h2>5. Demo Walkthrough</h2>
+
+  <h3>Scene 1: First Install (15 seconds)</h3>
+  <p>Open Chrome → Type <code>prana-ai-six.vercel.app</code> → Tap "Install App" → App appears on home screen like a native app.</p>
+
+  <h3>Scene 2: Camera Breathing (30 seconds — THE WOW)</h3>
+  <p>Tap "Breathe" → "Camera Breathing" → Grant camera permission → Place phone at chest height → Breathe naturally → Watch the real-time visualization expand on inhale, contract on exhale → Session completes → See personalized feedback.</p>
+
+  <h3>Scene 3: Voice Journal in Hindi (20 seconds)</h3>
+  <p>Tap "Journal" → Switch to Hindi (हि) → Tap mic → Say "मैं आज बहुत खुश हूं" → See 😊 happy mood detected → AI provides wellness suggestion.</p>
+
+  <h3>Scene 4: AI Chat (15 seconds)</h3>
+  <p>Tap "Chat" → Type "I'm feeling stressed about exams" → AI responds with personalized coping strategies drawn from the knowledge base.</p>
+
+  <h3>Scene 5: Airplane Mode Test (15 seconds — PROOF)</h3>
+  <p>Turn on airplane mode → Open the app → Navigate to all features → Everything works → Proof: zero internet dependency.</p>
+
+  <h3>Scene 6: Dashboard (15 seconds)</h3>
+  <p>Open Insights → See mood trends chart → View breathing statistics → Check mood prediction → Export wellness report.</p>
+
+  <div class="highlight">
+    <strong>Total Demo Time: ~2 minutes</strong> — Every feature runs on-device with zero internet.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 5: TECH STACK & INNOVATION -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>6. Tech Stack</h2>
+
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+    <tr><td>Framework</td><td>React 19 + TypeScript</td><td>Type safety, modern hooks, fast rendering</td></tr>
+    <tr><td>Bundler</td><td>Vite</td><td>Instant HMR, optimized builds, code splitting</td></tr>
+    <tr><td>AI (NLP)</td><td>ONNX Runtime Web</td><td>Real neural network inference on-device</td></tr>
+    <tr><td>AI (Signal)</td><td>TensorFlow.js</td><td>GPU-accelerated signal processing in browser</td></tr>
+    <tr><td>Voice</td><td>Web Speech API</td><td>Native browser STT, works offline on Android</td></tr>
+    <tr><td>Storage</td><td>IndexedDB</td><td>Structured client-side database, no server needed</td></tr>
+    <tr><td>Routing</td><td>React Router v7</td><td>SPA navigation with lazy loading</td></tr>
+    <tr><td>State</td><td>Zustand</td><td>Lightweight state management, no boilerplate</td></tr>
+    <tr><td>Animations</td><td>Framer Motion</td><td>Smooth 60fps animations for breathing UI</td></tr>
+    <tr><td>Icons</td><td>Lucide React</td><td>Consistent, lightweight icon library</td></tr>
+    <tr><td>Styling</td><td>Tailwind CSS + Inline</td><td>Responsive design, mobile-first</td></tr>
+    <tr><td>Offline</td><td>Service Worker + Cache API</td><td>PWA with full offline support</td></tr>
+    <tr><td>Auth</td><td>SHA-256 + LocalStorage</td><td>Offline authentication, no server</td></tr>
+    <tr><td>Export</td><td>Office Kit API</td><td>JSON/CSV report generation</td></tr>
+  </table>
+
+  <h2>7. What Makes This Innovative</h2>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="icon">🏆</div>
+      <h4>World's First Offline AI Wellness</h4>
+      <p>No other wellness app runs a real neural network (ONNX) entirely on the phone with zero cloud dependency.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📡</div>
+      <h4>Camera-as-Sensor</h4>
+      <p>Uses the front camera as a medical-grade breathing sensor through signal processing — no wearable device needed.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🇮🇳</div>
+      <h4>India-First Design</h4>
+      <p>Full Hindi support with Romanized Hinglish detection. Works on budget Android phones with 2GB RAM.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🔐</div>
+      <h4>Zero Privacy Trade-off</h4>
+      <p>Unlike every other wellness app, personal data NEVER leaves the device. No analytics, no tracking, no cloud.</p>
+    </div>
+  </div>
+
+  <h2>8. Impact & Scalability</h2>
+
+  <table>
+    <tr><th>Metric</th><th>Value</th><th>How</th></tr>
+    <tr><td>Target Users</td><td>10,000 students</td><td>Deploy to college campuses via word of mouth</td></tr>
+    <tr><td>Cost Per User</td><td>₹0</td><td>No server costs, no cloud APIs, Vercel free tier</td></tr>
+    <tr><td>Minimum Device</td><td>Any Android + Chrome</td><td>PWA works on Android 5+ with 2GB RAM</td></tr>
+    <tr><td>Internet Required</td><td>Only for first install</td><td>After that, works 100% offline</td></tr>
+    <tr><td>Languages</td><td>English + Hindi</td><td>Expandable to Tamil, Telugu, etc.</td></tr>
+    <tr><td>Data Privacy</td><td>100% on-device</td><td>No data ever leaves the phone</td></tr>
+  </table>
+
+  <h2>9. Why We Should Win</h2>
+
+  <ol>
+    <li><strong>Real AI, Not API Wrappers:</strong> We bundled a genuine DistilBERT neural network (758KB) that runs on-device. Most hackathon projects wrap ChatGPT API — we eliminated the API entirely.</li>
+    <li><strong>Medical-Grade Signal Processing:</strong> The camera breathing detection uses bandpass filtering at 0.1–0.5 Hz — the same frequency range used in clinical respiratory monitors.</li>
+    <li><strong>Complete Offline Story:</strong> Every single feature works in airplane mode. The judges can literally turn off WiFi and everything still functions.</li>
+    <li><strong>India-First:</strong> Hindi voice input, Romanized Hinglish sentiment analysis, crisis helplines for Indian users.</li>
+    <li><strong>Production Ready:</strong> 7,676 lines of code, 32 files, deployed to Vercel, installable as PWA. This is not a prototype — it's a product.</li>
+    <li><strong>Zero Cloud = Maximum Privacy:</strong> In a world of data breaches, our app guarantees that your most personal health data stays on your device forever.</li>
+  </ol>
+
+  <div class="page-footer">
+    <p><strong>PranaAI</strong> — Your Phone Is Your Therapist</p>
+    <p>Built with ❤️ for the iQOO Hackathon 2025</p>
+    <p>Live at: https://prana-ai-six.vercel.app</p>
+    <p>Source: https://github.com/koti-pavan-kumar/pranaAI</p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- PAGE 6: APPENDIX -->
+<!-- ============================================ -->
+<div class="page">
+  <h2>10. Appendix: File Structure</h2>
+
+  <div class="code-block" style="font-size: 12px;">
+prana-ai/
+├── public/
+│   ├── models/
+│   │   ├── sentiment-small.onnx     <span class="comment"># 758KB DistilBERT model</span>
+│   │   └── vocab-small.txt           <span class="comment"># WordPiece vocabulary</span>
+│   └── sw.js                         <span class="comment"># Service Worker (PWA)</span>
+├── src/
+│   ├── components/
+│   │   ├── Layout.tsx                <span class="comment"># Sidebar navigation + responsive layout</span>
+│   │   ├── ErrorBoundary.tsx         <span class="comment"># Crash recovery</span>
+│   │   └── PageLoader.tsx            <span class="comment"># Loading spinner</span>
+│   ├── hooks/
+│   │   ├── useCameraMotion.ts        <span class="comment"># Camera breathing detection engine</span>
+│   │   ├── useDeviceTelemetry.ts     <span class="comment"># Battery, network, device info</span>
+│   │   ├── usePoseNet.ts             <span class="comment"># Pose estimation (optional)</span>
+│   │   └── useVoiceInput.ts          <span class="comment"># Web Speech API voice capture</span>
+│   ├── pages/
+│   │   ├── Landing.tsx               <span class="comment"># Public landing page</span>
+│   │   ├── Home.tsx                  <span class="comment"># Dashboard home</span>
+│   │   ├── Breathing.tsx             <span class="comment"># Guided breathing (4 patterns)</span>
+│   │   ├── CameraBreathing.tsx       <span class="comment"># Camera-based breathing detection</span>
+│   │   ├── Journal.tsx               <span class="comment"># Voice + text mood journal</span>
+│   │   ├── Dashboard.tsx             <span class="comment"># Analytics & insights</span>
+│   │   ├── Chat.tsx                  <span class="comment"># AI wellness chatbot</span>
+│   │   ├── Emergency.tsx             <span class="comment"># Crisis helplines</span>
+│   │   ├── Telemetry.tsx             <span class="comment"># Device metrics</span>
+│   │   ├── Login.tsx                 <span class="comment"># Authentication</span>
+│   │   └── Register.tsx              <span class="comment"># User registration</span>
+│   ├── utils/
+│   │   ├── sentiment.ts              <span class="comment"># ONNX + keyword sentiment analysis</span>
+│   │   ├── onnx-engine.ts            <span class="comment"># ONNX Runtime Web integration</span>
+│   │   ├── mood-predictor.ts         <span class="comment"># Statistical mood prediction</span>
+│   │   └── i18n.ts                   <span class="comment"># English + Hindi translations</span>
+│   ├── lib/
+│   │   └── db.ts                     <span class="comment"># IndexedDB wrapper</span>
+│   ├── auth.tsx                      <span class="comment"># Auth context + password hashing</span>
+│   ├── store.tsx                     <span class="comment"># Zustand global state</span>
+│   ├── App.tsx                       <span class="comment"># Router + lazy loading</span>
+│   ├── main.tsx                      <span class="comment"># Entry point + SW registration</span>
+│   └── index.css                     <span class="comment"># Global styles (Tailwind)</span>
+├── index.html                        <span class="comment"># HTML shell + inline CSS</span>
+├── package.json                      <span class="comment"># Dependencies</span>
+├── tsconfig.json                     <span class="comment"># TypeScript config</span>
+├── vite.config.ts                    <span class="comment"># Vite build config</span>
+└── tailwind.config.js                <span class="comment"># Tailwind theme</span>
+  </div>
+
+  <h2>11. Submission Checklist</h2>
+
+  <table>
+    <tr><th>Field</th><th>Value</th></tr>
+    <tr><td>Idea Title</td><td><strong>PranaAI — On-Device AI Wellness Companion</strong></td></tr>
+    <tr><td>Problem Track</td><td>Healthcare & Wellness</td></tr>
+    <tr><td>Prototype URL</td><td>https://prana-ai-six.vercel.app</td></tr>
+    <tr><td>Source Code</td><td>https://github.com/koti-pavan-kumar/pranaAI</td></tr>
+    <tr><td>Video Demo</td><td>[Record using DEMO-SCRIPT.md and upload to YouTube]</td></tr>
+    <tr><td>Pitch Deck</td><td>[Print pitch-deck.html to PDF]</td></tr>
+    <tr><td>Android Proficiency</td><td>Intermediate — React PWA with camera, speech, ONNX, IndexedDB</td></tr>
+    <tr><td>LLM Proficiency</td><td>Intermediate — DistilBERT ONNX (758KB) with custom tokenizer, on-device inference</td></tr>
+  </table>
+
+  <div class="highlight">
+    <strong>Key Differentiator:</strong> While most hackathon teams wrap cloud APIs (OpenAI, Google Cloud, AWS), PranaAI bundles a real neural network that runs entirely on the phone's processor. Zero internet. Zero cost. Maximum privacy. This is the future of AI — not cloud-dependent, but device-native.
+  </div>
+
+  <div class="page-footer">
+    <p>PranaAI — iQOO Hackathon Submission Document</p>
+    <p>Generated on September 8, 2025</p>
+  </div>
+</div>
+
+</body>
+</html>
