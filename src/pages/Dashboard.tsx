@@ -189,19 +189,19 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
           {[
-            { icon: <Wind size={20} />, label: 'Sessions', value: totalSessions.toString(), color: '#0d9488', bg: '#f0fdfa' },
-            { icon: <BookOpen size={20} />, label: 'Journal Entries', value: totalEntries.toString(), color: '#7c3aed', bg: '#faf5ff' },
-            { icon: <Clock size={20} />, label: 'Total Minutes', value: `${totalMinutes}m`, color: '#06b6d4', bg: '#ecfeff' },
-            { icon: <Flame size={20} />, label: 'Current Streak', value: `${streak}d`, color: '#f59e0b', bg: '#fffbeb' },
+            { icon: <Wind size={18} />, label: 'Sessions', value: totalSessions.toString(), color: '#0d9488', bg: '#f0fdfa' },
+            { icon: <BookOpen size={18} />, label: 'Journal', value: totalEntries.toString(), color: '#7c3aed', bg: '#faf5ff' },
+            { icon: <Clock size={18} />, label: 'Minutes', value: totalMinutes < 1000 ? `${totalMinutes}m` : `${(totalMinutes / 60).toFixed(1)}h`, color: '#06b6d4', bg: '#ecfeff' },
+            { icon: <Flame size={18} />, label: 'Streak', value: `${streak}d`, color: '#f59e0b', bg: '#fffbeb' },
           ].map(({ icon, label, value, color, bg }, i) => (
-            <motion.div key={label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-              <Card style={{ padding: 20, textAlign: 'center' }}>
-                <div style={{ width: 48, height: 48, borderRadius: 14, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color }}>{icon}</div>
-                <p style={{ fontSize: 28, fontWeight: 800, color: '#0f172a' }}>{value}</p>
-                <p style={{ fontSize: 12, color: '#64748b', marginTop: 4, fontWeight: 500 }}>{label}</p>
-              </Card>
+            <motion.div key={label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+              <div style={{ background: 'white', border: '1px solid #e8edf2', borderRadius: 14, padding: '16px 12px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color }}>{icon}</div>
+                <p style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{value}</p>
+                <p style={{ fontSize: 11, color: '#64748b', marginTop: 6, fontWeight: 600 }}>{label}</p>
+              </div>
             </motion.div>
           ))}
         </div>
